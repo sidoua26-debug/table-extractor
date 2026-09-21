@@ -338,9 +338,9 @@ async function run() {
   await generateScreenshot({
     filename: '02-virtualized-detection.png',
     pageUrl: 'http://127.0.0.1:9876/ag-grid',
-    displayUrl: 'https://www.ag-grid.com/example/performance-grid',
-    urlDomain: 'ag-grid.com',
-    urlPath: '/example/performance-grid',
+    displayUrl: 'https://tables.example.com/virtualized-grid',
+    urlDomain: 'tables.example.com',
+    urlPath: '/virtualized-grid',
     isPro: false,
     popupSetup: () => {
       const csv = document.getElementById('fmt-csv');
@@ -352,9 +352,9 @@ async function run() {
   await generateScreenshot({
     filename: '03-pro-unlocked.png',
     pageUrl: 'http://127.0.0.1:9876/ag-grid',
-    displayUrl: 'https://app.datacloud.io/workspaces/financial-reporting',
-    urlDomain: 'app.datacloud.io',
-    urlPath: '/workspaces/financial-reporting',
+    displayUrl: 'https://workspace.example.com/financial-reporting',
+    urlDomain: 'workspace.example.com',
+    urlPath: '/financial-reporting',
     isPro: true,
     popupSetup: () => {
       const csv = document.getElementById('fmt-csv');
@@ -368,8 +368,8 @@ async function run() {
   await generateScreenshot({
     filename: '04-export-options.png',
     pageUrl: 'http://127.0.0.1:9876/ag-grid',
-    displayUrl: 'https://portal.enterprise-analytics.com/data/export',
-    urlDomain: 'portal.enterprise-analytics.com',
+    displayUrl: 'https://portal.example.com/data/export',
+    urlDomain: 'portal.example.com',
     urlPath: '/data/export',
     isPro: true,
     popupSetup: () => {
