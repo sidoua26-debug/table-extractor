@@ -12,48 +12,75 @@ if (!fs.existsSync(iconDir)) {
   fs.mkdirSync(iconDir, { recursive: true });
 }
 
-// Master SVG for Table Extractor icon: Grid + extraction arrow
-const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+// Master SVG for Table Extractor icon: Modern squircle + clean table header/cells + high-contrast download arrow & tray
+const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
   <defs>
+    <!-- Background Gradient: Brand Sky Blue to Deep Ocean -->
     <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1e293b"/>
-      <stop offset="100%" stop-color="#0f172a"/>
+      <stop offset="0%" stop-color="#0284C7"/>
+      <stop offset="50%" stop-color="#0369A1"/>
+      <stop offset="100%" stop-color="#075985"/>
     </linearGradient>
-    <linearGradient id="gridGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#38bdf8"/>
-      <stop offset="100%" stop-color="#0284c7"/>
+
+    <!-- Top subtle lighting sheen for app-icon depth -->
+    <linearGradient id="topSheen" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.25"/>
+      <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0.03"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
     </linearGradient>
-    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#34d399"/>
-      <stop offset="100%" stop-color="#059669"/>
+
+    <!-- Arrow Gradient: White to Vibrant Mint/Emerald tip -->
+    <linearGradient id="arrowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="60%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#6EE7B7"/>
     </linearGradient>
   </defs>
 
-  <!-- Background rounded card -->
-  <rect x="8" y="8" width="112" height="112" rx="24" fill="url(#bgGrad)" stroke="#334155" stroke-width="4"/>
+  <!-- App Icon Squircle Container -->
+  <rect x="32" y="32" width="448" height="448" rx="104" ry="104" fill="url(#bgGrad)"/>
+  <rect x="32" y="32" width="448" height="448" rx="104" ry="104" fill="url(#topSheen)"/>
 
-  <!-- Table header bar -->
-  <rect x="24" y="24" width="80" height="18" rx="4" fill="url(#gridGrad)"/>
+  <!-- Table Header Bar: Clean Solid White with Rounded Ends -->
+  <rect x="76" y="80" width="360" height="64" rx="20" fill="#FFFFFF"/>
 
-  <!-- Table columns / cells -->
-  <!-- Row 1 -->
-  <rect x="24" y="48" width="22" height="14" rx="2" fill="#475569"/>
-  <rect x="52" y="48" width="24" height="14" rx="2" fill="#64748b"/>
-  <rect x="82" y="48" width="22" height="14" rx="2" fill="#475569"/>
+  <!-- Table Flanking Cells: 2 rows of structured data blocks -->
+  <!-- Left column cells -->
+  <rect x="76" y="168" width="108" height="68" rx="18" fill="#FFFFFF" fill-opacity="0.85"/>
+  <rect x="76" y="254" width="108" height="68" rx="18" fill="#FFFFFF" fill-opacity="0.45"/>
 
-  <!-- Row 2 -->
-  <rect x="24" y="68" width="22" height="14" rx="2" fill="#334155"/>
-  <rect x="52" y="68" width="24" height="14" rx="2" fill="#475569"/>
-  <rect x="82" y="68" width="22" height="14" rx="2" fill="#334155"/>
+  <!-- Right column cells -->
+  <rect x="328" y="168" width="108" height="68" rx="18" fill="#FFFFFF" fill-opacity="0.85"/>
+  <rect x="328" y="254" width="108" height="68" rx="18" fill="#FFFFFF" fill-opacity="0.45"/>
 
-  <!-- Row 3 -->
-  <rect x="24" y="88" width="22" height="14" rx="2" fill="#1e293b"/>
-  <rect x="52" y="88" width="24" height="14" rx="2" fill="#334155"/>
-  <rect x="82" y="88" width="22" height="14" rx="2" fill="#1e293b"/>
+  <!-- Center Extraction Action: Solid White Download Arrow with Mint Tip -->
+  <path d="M 226 156
+           C 226 145 235 136 246 136
+           L 266 136
+           C 277 136 286 145 286 156
+           L 286 256
+           L 342 256
+           C 356 256 364 274 353 285
+           L 267 368
+           C 261 374 251 374 245 368
+           L 159 285
+           C 148 274 156 256 170 256
+           L 226 256
+           Z"
+        fill="url(#arrowGrad)"/>
 
-  <!-- Extraction badge (Green download/extract badge) -->
-  <circle cx="92" cy="92" r="22" fill="url(#accentGrad)" stroke="#0f172a" stroke-width="3"/>
-  <path d="M92 78 v18 M84 88 l8 8 l8 -8" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Download Tray Cradle -->
+  <path d="M 124 352
+           L 124 396
+           C 124 418 142 436 164 436
+           L 348 436
+           C 370 436 388 418 388 396
+           L 388 352"
+        fill="none"
+        stroke="#FFFFFF"
+        stroke-width="44"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
 </svg>`;
 
 const masterSvgPath = path.join(iconDir, 'icon-master.svg');
