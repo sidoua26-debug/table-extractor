@@ -482,13 +482,42 @@ body {
 /* Footer */
 .app-footer {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 6px;
   padding: 10px 16px;
   background-color: var(--bg-secondary);
   border-top: 1px solid var(--border);
   font-size: 11px;
   color: var(--text-muted);
+}
+
+.footer-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.footer-bottom {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.footer-support-label {
+  color: var(--text-muted);
+}
+
+.footer-link {
+  color: var(--text-secondary);
+  text-decoration: underline;
+  transition: color 0.15s ease;
+}
+
+.footer-link:hover {
+  color: var(--accent);
 }
 
 /* Modal */

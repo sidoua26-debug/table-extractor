@@ -2,7 +2,7 @@
  * Table Extractor - Popup Controller
  */
 
-import { isProUser, getLicenseStatus, activateLicense, createPaymentInvoice } from '../lib/license.js';
+import { isProUser, getLicenseStatus, activateLicense, createPaymentInvoice, SUPPORT_EMAIL } from '../lib/license.js';
 import { tableDataToCSV } from '../lib/csv.js';
 import { tableDataToXLSX } from '../lib/xlsx.js';
 import { tableDataToJSON } from '../lib/json.js';
@@ -52,6 +52,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const inputLicenseKey = document.getElementById('input-license-key');
   const btnActivatePro = document.getElementById('btn-activate-pro');
   const activationMsg = document.getElementById('activation-msg');
+  const footerSupportLink = document.getElementById('footer-support-link');
+
+  if (footerSupportLink) {
+    footerSupportLink.href = `mailto:${SUPPORT_EMAIL}`;
+    footerSupportLink.textContent = SUPPORT_EMAIL;
+  }
 
   let activeTab = null;
   let detectedTables = [];

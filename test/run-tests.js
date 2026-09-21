@@ -94,6 +94,14 @@ async function run() {
   };
 
   const { isProUser, getLicenseStatus, activateLicense, resetLicense, canUseVirtualizedCapture, canUseZipExport, canUseMultiFormatExport } = await import('../lib/license.js');
+  const { SUPPORT_EMAIL: emailFromConstants } = await import('../lib/constants.js');
+  const { SUPPORT_EMAIL: emailFromLicense } = await import('../lib/license.js');
+  assert(emailFromConstants === 'sidoua26@gmail.com', 'SUPPORT_EMAIL in constants.js is sidoua26@gmail.com');
+  assert(emailFromLicense === 'sidoua26@gmail.com', 'SUPPORT_EMAIL in license.js matches constants.js');
+
+  const popupHtml = fs.readFileSync(path.resolve(__dirname, '..', 'popup', 'popup.html'), 'utf8');
+  assert(popupHtml.includes('href="mailto:sidoua26@gmail.com"'), 'Popup HTML footer contains mailto:sidoua26@gmail.com');
+  assert(popupHtml.includes('Support:'), 'Popup HTML footer contains Support: label');
 
   const initialStatus = await getLicenseStatus();
   assert(initialStatus === 'free', 'Initial license status is "free"');

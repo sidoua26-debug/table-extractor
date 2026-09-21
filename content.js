@@ -542,8 +542,8 @@
       // 1. Scroll to top
       if (container.scrollTop > 0) {
         container.scrollTop = 0;
-        await waitForDOMSettle(container, settleDelayMs, 600, abortSignal);
       }
+      await waitForDOMSettle(container, settleDelayMs, 600, abortSignal);
 
       // Initial capture
       extractRows();
