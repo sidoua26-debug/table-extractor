@@ -1,0 +1,68 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { execSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const rootDir = path.resolve(__dirname, '..');
+const iconDir = path.join(rootDir, 'assets', 'icons');
+
+if (!fs.existsSync(iconDir)) {
+  fs.mkdirSync(iconDir, { recursive: true });
+}
+
+// Master SVG for Table Extractor icon: Grid + extraction arrow
+const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="gridGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background rounded card -->
+  <rect x="8" y="8" width="112" height="112" rx="24" fill="url(#bgGrad)" stroke="#334155" stroke-width="4"/>
+
+  <!-- Table header bar -->
+  <rect x="24" y="24" width="80" height="18" rx="4" fill="url(#gridGrad)"/>
+
+  <!-- Table columns / cells -->
+  <!-- Row 1 -->
+  <rect x="24" y="48" width="22" height="14" rx="2" fill="#475569"/>
+  <rect x="52" y="48" width="24" height="14" rx="2" fill="#64748b"/>
+  <rect x="82" y="48" width="22" height="14" rx="2" fill="#475569"/>
+
+  <!-- Row 2 -->
+  <rect x="24" y="68" width="22" height="14" rx="2" fill="#334155"/>
+  <rect x="52" y="68" width="24" height="14" rx="2" fill="#475569"/>
+  <rect x="82" y="68" width="22" height="14" rx="2" fill="#334155"/>
+
+  <!-- Row 3 -->
+  <rect x="24" y="88" width="22" height="14" rx="2" fill="#1e293b"/>
+  <rect x="52" y="88" width="24" height="14" rx="2" fill="#334155"/>
+  <rect x="82" y="88" width="22" height="14" rx="2" fill="#1e293b"/>
+
+  <!-- Extraction badge (Green download/extract badge) -->
+  <circle cx="92" cy="92" r="22" fill="url(#accentGrad)" stroke="#0f172a" stroke-width="3"/>
+  <path d="M92 78 v18 M84 88 l8 8 l8 -8" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`;
+
+const masterSvgPath = path.join(iconDir, 'icon-master.svg');
+fs.writeFileSync(masterSvgPath, svgContent, 'utf8');
+
+const sizes = [16, 48, 128];
+for (const size of sizes) {
+  const destPath = path.join(iconDir, `icon-${size}.png`);
+  execSync(`rsvg-convert -w ${size} -h ${size} "${masterSvgPath}" -o "${destPath}"`);
+  console.log(`Rendered ${size}x${size} icon -> ${destPath}`);
+}
+console.log('All icons generated successfully!');

@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Virtualized Table Test Harness</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #0284c7;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      padding: 24px;
+    }
+
+    h1 { margin-bottom: 8px; }
+    p { color: var(--text-muted); margin-bottom: 20px; }
+
+    .test-section {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 24px;
+    }
+
+    .controls-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .btn-toggle {
+      background: var(--border);
+      color: var(--text);
+      border: 1px solid #475569;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .btn-toggle.active {
+      background: var(--accent);
+      border-color: #38bdf8;
+    }
+
+    .stats-bar {
+      font-size: 12px;
+      color: #38bdf8;
+      margin-bottom: 12px;
+    }
+
+    /* Virtualized Grid Styles */
+    .grid-container {
+      height: 400px;
+      overflow-y: auto;
+      overflow-anchor: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #090d16;
+      position: relative;
+    }
+
+    .grid-header {
+      position: sticky;
+      top: 0;
+      display: flex;
+      background: #1e293b;
+      border-bottom: 2px solid var(--accent);
+      font-weight: 700;
+      z-index: 10;
+    }
+
+    .grid-row {
+      display: flex;
+      height: 36px;
+      box-sizing: border-box;
+      border-bottom: 1px solid #1e293b;
+      align-items: center;
+    }
+
+    .grid-row:nth-child(even) {
+      background-color: rgba(255, 255, 255, 0.02);
+    }
+
+    .grid-row:hover {
+      background-color: rgba(2, 132, 199, 0.1);
+    }
+
+    .cell {
+      padding: 8px 12px;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 12px;
+    }
+
+    .cell-id { flex: 0 0 70px; color: var(--text-muted); }
+    .cell-dept { flex: 0 0 110px; }
+    .cell-salary { flex: 0 0 100px; text-align: right; }
+    .cell-status { flex: 0 0 80px; }
+
+    .virtual-spacer {
+      width: 100%;
+    }
+
+    /* Horizontal Virtualization Grid */
+    .h-grid-container {
+      width: 100%;
+      height: 180px;
+      overflow: auto;
+      border: 1px solid var(--border);
+      background: #090d16;
+      position: relative;
+    }
+
+    .h-grid-content {
+      width: 3000px; /* Forces horizontal overflow */
+      position: relative;
+    }
+
+    /* Static Standard Table */
+    table.static-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    table.static-table th, table.static-table td {
+      border: 1px solid var(--border);
+      padding: 8px 12px;
+      text-align: left;
+    }
+
+    table.static-table th {
+      background: #1e293b;
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+  <h1>Table Extractor — Virtualized Grid Test Page</h1>
+  <p>Test harness with simulated 2,000-row virtualized data grid, horizontal virtualization, and static tables.</p>
+
+  <!-- Section 1: 2,000-row Virtualized Data Grid -->
+  <div class="test-section">
+    <h2>1. Virtualized Employee Data Grid (2,000 Records)</h2>
+    <div class="controls-bar">
+      <button id="toggle-ids" class="btn-toggle active">Stable data-row-id: ON</button>
+      <button id="toggle-latency" class="btn-toggle">Network Latency (200ms): OFF</button>
+      <button id="toggle-snapback" class="btn-toggle">Snap-back Failure: OFF</button>
+      <button id="btn-scroll-top" class="btn-toggle">Scroll to Top</button>
+      <button id="btn-scroll-bottom" class="btn-toggle">Scroll to Bottom</button>
+    </div>
+
+    <div class="stats-bar" id="grid-stats">
+      Total Dataset: 2,000 rows | Currently in DOM: 0 rows | Scroll Top: 0px
+    </div>
+
+    <div id="virtual-grid-container" class="grid-container virtual-grid" data-virtualized="true">
+      <div class="grid-header" role="row">
+        <div class="cell cell-id" role="columnheader">ID</div>
+        <div class="cell" role="columnheader">Name</div>
+        <div class="cell cell-dept" role="columnheader">Department</div>
+        <div class="cell" role="columnheader">Role</div>
+        <div class="cell" role="columnheader">Email</div>
+        <div class="cell cell-salary" role="columnheader">Salary</div>
+        <div class="cell cell-status" role="columnheader">Status</div>
+      </div>
+      <div id="top-spacer" class="virtual-spacer"></div>
+      <div id="grid-rows-container"></div>
+      <div id="bottom-spacer" class="virtual-spacer"></div>
+    </div>
+  </div>
+
+  <!-- Section 2: Horizontally Virtualized Table -->
+  <div class="test-section">
+    <h2>2. Horizontally Virtualized Grid (Columns virtualized)</h2>
+    <p>Grid container with horizontal overflow and column virtualization spacer.</p>
+    <div id="h-grid-container" class="h-grid-container virtual-grid" data-virtualized="true">
+      <div class="h-grid-content">
+        <div class="virtual-col-spacer" style="display:inline-block; width: 50px;"></div>
+        <div class="grid-header" role="row" style="width: 800px; display: inline-flex;">
+          <div class="cell" role="columnheader" aria-colindex="1">Col A</div>
+          <div class="cell" role="columnheader" aria-colindex="2">Col B</div>
+          <div class="cell" role="columnheader" aria-colindex="3">Col C</div>
+          <div class="cell" role="columnheader" aria-colindex="4">Col D</div>
+        </div>
+        <div class="grid-row" role="row" style="width: 800px; display: inline-flex;">
+          <div class="cell" role="gridcell">Data 1A</div>
+          <div class="cell" role="gridcell">Data 1B</div>
+          <div class="cell" role="gridcell">Data 1C</div>
+          <div class="cell" role="gridcell">Data 1D</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 3: Standard Static HTML Table -->
+  <div class="test-section">
+    <h2>3. Standard HTML Static Table</h2>
+    <p>A regular static &lt;table&gt; element with 10 rows for baseline testing.</p>
+    <table class="static-table" id="static-projects-table">
+      <caption>Active Company Projects</caption>
+      <thead>
+        <tr>
+          <th>Project ID</th>
+          <th>Project Name</th>
+          <th>Owner</th>
+          <th>Budget</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>PRJ-101</td><td>Alpha Engine</td><td>Sarah Connor</td><td>$120,000</td><td>In Progress</td></tr>
+        <tr><td>PRJ-102</td><td>Bravo Cloud</td><td>John Smith</td><td>$85,000</td><td>Completed</td></tr>
+        <tr><td>PRJ-103</td><td>Charlie Dashboard</td><td>Alice Wong</td><td>$45,000</td><td>Review</td></tr>
+        <tr><td>PRJ-104</td><td>Delta Security</td><td>Bob Vance</td><td>$210,000</td><td>In Progress</td></tr>
+        <tr><td>PRJ-105</td><td>Echo Data Pipeline</td><td>Diana Prince</td><td>$95,000</td><td>Planning</td></tr>
+        <tr><td>PRJ-106</td><td>Foxtrot Billing</td><td>Bruce Wayne</td><td>$340,000</td><td>In Progress</td></tr>
+        <tr><td>PRJ-107</td><td>Golf Mobile App</td><td>Peter Parker</td><td>$150,000</td><td>Completed</td></tr>
+        <tr><td>PRJ-108</td><td>Hotel Integration</td><td>Clark Kent</td><td>$60,000</td><td>In Progress</td></tr>
+        <tr><td>PRJ-109</td><td>India Analytics</td><td>Barry Allen</td><td>$175,000</td><td>Testing</td></tr>
+        <tr><td>PRJ-110</td><td>Juliet Workflow</td><td>Tony Stark</td><td>$500,000</td><td>In Progress</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    // Generate 2,000 mock employee records
+    const TOTAL_ROWS = 2000;
+    const ROW_HEIGHT = 36;
+    const VISIBLE_COUNT = 30; // ~30 rows in DOM at a time
+    const BUFFER = 5;
+
+    const firstNames = ['James', 'Mary', 'Robert', 'Patricia', 'John', 'Jennifer', 'Michael', 'Linda', 'David', 'Elizabeth', 'William', 'Barbara', 'Richard', 'Susan', 'Joseph', 'Jessica', 'Thomas', 'Sarah', 'Charles', 'Karen'];
+    const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson', 'Thomas', 'Taylor', 'Moore', 'Jackson', 'Martin'];
+    const departments = ['Engineering', 'Product', 'Marketing', 'Sales', 'Finance', 'Human Resources', 'Design', 'Legal', 'Operations', 'Customer Success'];
+    const roles = ['Software Engineer', 'Senior Engineer', 'Engineering Manager', 'Product Manager', 'Designer', 'Account Executive', 'Financial Analyst', 'Marketing Specialist', 'DevOps Lead', 'QA Analyst'];
+    const statuses = ['Active', 'On Leave', 'Remote', 'Contractor', 'Probation'];
+
+    const dataset = [];
+    for (let i = 1; i <= TOTAL_ROWS; i++) {
+      const fn = firstNames[i % firstNames.length];
+      const ln = lastNames[(i * 3) % lastNames.length];
+      const dept = departments[(i * 7) % departments.length];
+      const role = roles[(i * 5) % roles.length];
+      const salary = 50000 + ((i * 1234) % 110000);
+      const status = statuses[i % statuses.length];
+      dataset.push({
+        id: `EMP-${String(i).padStart(5, '0')}`,
+        name: `${fn} ${ln}`,
+        dept,
+        role,
+        email: `${fn.toLowerCase()}.${ln.toLowerCase()}@example.com`,
+        salary: `$${salary.toLocaleString()}`,
+        status
+      });
+    }
+
+    // Config state
+    let useStableIds = true;
+    let simulateLatency = false;
+    let simulateSnapback = false;
+
+    const container = document.getElementById('virtual-grid-container');
+    const rowsContainer = document.getElementById('grid-rows-container');
+    const topSpacer = document.getElementById('top-spacer');
+    const bottomSpacer = document.getElementById('bottom-spacer');
+    const statsBar = document.getElementById('grid-stats');
+
+    const toggleIdsBtn = document.getElementById('toggle-ids');
+    const toggleLatencyBtn = document.getElementById('toggle-latency');
+    const toggleSnapbackBtn = document.getElementById('toggle-snapback');
+
+    toggleIdsBtn.addEventListener('click', () => {
+      useStableIds = !useStableIds;
+      toggleIdsBtn.textContent = `Stable data-row-id: ${useStableIds ? 'ON' : 'OFF'}`;
+      toggleIdsBtn.classList.toggle('active', useStableIds);
+      render();
+    });
+
+    toggleLatencyBtn.addEventListener('click', () => {
+      simulateLatency = !simulateLatency;
+      toggleLatencyBtn.textContent = `Network Latency (200ms): ${simulateLatency ? 'ON' : 'OFF'}`;
+      toggleLatencyBtn.classList.toggle('active', simulateLatency);
+    });
+
+    toggleSnapbackBtn.addEventListener('click', () => {
+      simulateSnapback = !simulateSnapback;
+      toggleSnapbackBtn.textContent = `Snap-back Failure: ${simulateSnapback ? 'ON' : 'OFF'}`;
+      toggleSnapbackBtn.classList.toggle('active', simulateSnapback);
+    });
+
+    document.getElementById('btn-scroll-top').addEventListener('click', () => {
+      container.scrollTop = 0;
+    });
+
+    document.getElementById('btn-scroll-bottom').addEventListener('click', () => {
+      container.scrollTop = container.scrollHeight;
+    });
+
+    // Virtualized render function
+    let renderTimer = null;
+    function render() {
+      if (simulateSnapback && container.scrollTop > 50) {
+        // Snap-back behavior
+        container.scrollTop = 0;
+        return;
+      }
+
+      if (simulateLatency) {
+        if (renderTimer) clearTimeout(renderTimer);
+        renderTimer = setTimeout(doRender, 200);
+      } else {
+        doRender();
+      }
+    }
+
+    function doRender() {
+      const scrollTop = container.scrollTop;
+      const startIndex = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - BUFFER);
+      const endIndex = Math.min(TOTAL_ROWS, startIndex + VISIBLE_COUNT + (BUFFER * 2));
+
+      const topHeight = startIndex * ROW_HEIGHT;
+      const bottomHeight = Math.max(0, (TOTAL_ROWS - endIndex) * ROW_HEIGHT);
+
+      topSpacer.style.height = `${topHeight}px`;
+      bottomSpacer.style.height = `${bottomHeight}px`;
+
+      const visibleSlice = dataset.slice(startIndex, endIndex);
+      
+      const fragment = document.createDocumentFragment();
+      for (const item of visibleSlice) {
+        const row = document.createElement('div');
+        row.className = 'grid-row';
+        row.setAttribute('role', 'row');
+        if (useStableIds) {
+          row.setAttribute('data-row-id', item.id);
+        }
+
+        row.innerHTML = `
+          <div class="cell cell-id" role="gridcell">${item.id}</div>
+          <div class="cell" role="gridcell">${item.name}</div>
+          <div class="cell cell-dept" role="gridcell">${item.dept}</div>
+          <div class="cell" role="gridcell">${item.role}</div>
+          <div class="cell" role="gridcell">${item.email}</div>
+          <div class="cell cell-salary" role="gridcell">${item.salary}</div>
+          <div class="cell cell-status" role="gridcell">${item.status}</div>
+        `;
+        fragment.appendChild(row);
+      }
+
+      rowsContainer.innerHTML = '';
+      rowsContainer.appendChild(fragment);
+
+      statsBar.textContent = `Total Dataset: ${TOTAL_ROWS} rows | Currently in DOM: ${visibleSlice.length} rows | Scroll Top: ${Math.round(scrollTop)}px | Range: [${startIndex}..${endIndex}]`;
+    }
+
+    container.addEventListener('scroll', render);
+    render(); // Initial render
+  </script>
+</body>
+</html>

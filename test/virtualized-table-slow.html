@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Virtualized Table - Slow Network / Laggy Grid Test Fixture</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #0284c7;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      padding: 24px;
+    }
+
+    h1 { margin-bottom: 8px; }
+    p { color: var(--text-muted); margin-bottom: 20px; }
+
+    .test-section {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 24px;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: #f59e0b;
+      color: #000;
+      font-weight: 700;
+      font-size: 11px;
+      margin-bottom: 12px;
+    }
+
+    .stats-bar {
+      font-size: 12px;
+      color: #38bdf8;
+      margin-bottom: 12px;
+    }
+
+    .grid-container {
+      height: 400px;
+      overflow-y: auto;
+      overflow-anchor: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #090d16;
+      position: relative;
+    }
+
+    .grid-header {
+      position: sticky;
+      top: 0;
+      display: flex;
+      background: #1e293b;
+      border-bottom: 2px solid var(--accent);
+      font-weight: 700;
+      z-index: 10;
+    }
+
+    .grid-row {
+      display: flex;
+      height: 36px;
+      box-sizing: border-box;
+      border-bottom: 1px solid #1e293b;
+      align-items: center;
+    }
+
+    .cell {
+      padding: 8px 12px;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 12px;
+    }
+
+    .cell-id { flex: 0 0 70px; color: var(--text-muted); }
+    .cell-dept { flex: 0 0 110px; }
+    .cell-salary { flex: 0 0 100px; text-align: right; }
+    .cell-status { flex: 0 0 80px; }
+    .cell-hidden { display: none; } /* Hidden column to test hidden columns option */
+
+    .virtual-spacer {
+      width: 100%;
+    }
+
+    .network-spinner {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 11px;
+      color: #f59e0b;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Table Extractor — Slow Network / Infinite Scroll Fixture</h1>
+  <p>Simulates a laggy network-backed virtualized grid that takes <strong>500ms–800ms</strong> to load and render rows after each scroll action.</p>
+
+  <div class="test-section">
+    <div class="status-badge">NETWORK LATENCY: 600ms per scroll</div>
+    <div class="network-spinner" id="network-indicator">⏳ Fetching rows from API...</div>
+
+    <div class="stats-bar" id="grid-stats">
+      Total Dataset: 2,000 rows | Currently in DOM: 0 rows | Scroll Top: 0px
+    </div>
+
+    <div id="slow-virtual-grid" class="grid-container virtual-grid" data-virtualized="true">
+      <div class="grid-header" role="row">
+        <div class="cell cell-id" role="columnheader">ID</div>
+        <div class="cell" role="columnheader">Name</div>
+        <div class="cell cell-dept" role="columnheader">Department</div>
+        <div class="cell" role="columnheader">Role</div>
+        <div class="cell" role="columnheader">Email</div>
+        <div class="cell cell-salary" role="columnheader">Salary</div>
+        <div class="cell cell-status" role="columnheader">Status</div>
+        <div class="cell cell-hidden" role="columnheader" id="header-internal-code">Internal Code</div>
+      </div>
+      <div id="top-spacer" class="virtual-spacer"></div>
+      <div id="grid-rows-container"></div>
+      <div id="bottom-spacer" class="virtual-spacer"></div>
+    </div>
+  </div>
+
+  <script>
+    const TOTAL_ROWS = 2000;
+    const ROW_HEIGHT = 36;
+    const VISIBLE_COUNT = 30;
+    const BUFFER = 5;
+    let LATENCY_MS = window.SIMULATED_LATENCY_MS !== undefined ? window.SIMULATED_LATENCY_MS : 600; // Simulated network delay per scroll
+
+    const firstNames = ['Alexander', 'Benjamin', 'Catherine', 'Daniel', 'Emma', 'Felix', 'Grace', 'Henry', 'Isabella', 'Jack'];
+    const lastNames = ['Adams', 'Baker', 'Clark', 'Davis', 'Evans', 'Ford', 'Graham', 'Hall', 'Irwin', 'Jenkins'];
+    const departments = ['Engineering', 'Security', 'Data Science', 'Cloud Ops', 'Product'];
+    const roles = ['Architect', 'Security Engineer', 'Data Scientist', 'Site Reliability Engineer', 'Lead Developer'];
+
+    const dataset = [];
+    for (let i = 1; i <= TOTAL_ROWS; i++) {
+      const fn = firstNames[i % firstNames.length];
+      const ln = lastNames[(i * 3) % lastNames.length];
+      const dept = departments[(i * 7) % departments.length];
+      const role = roles[(i * 5) % roles.length];
+      const salary = 65000 + ((i * 987) % 95000);
+      dataset.push({
+        id: `EMP-${String(i).padStart(5, '0')}`,
+        name: `${fn} ${ln}`,
+        dept,
+        role,
+        email: `${fn.toLowerCase()}.${ln.toLowerCase()}@corp.internal`,
+        salary: `$${salary.toLocaleString()}`,
+        status: i % 10 === 0 ? 'Remote' : 'Active',
+        internalCode: `SEC-KEY-${i * 1337}`
+      });
+    }
+
+    const container = document.getElementById('slow-virtual-grid');
+    const rowsContainer = document.getElementById('grid-rows-container');
+    const topSpacer = document.getElementById('top-spacer');
+    const bottomSpacer = document.getElementById('bottom-spacer');
+    const statsBar = document.getElementById('grid-stats');
+    const networkIndicator = document.getElementById('network-indicator');
+
+    let pendingRenderTimer = null;
+
+    function onScroll() {
+      networkIndicator.style.display = 'block';
+      if (pendingRenderTimer) clearTimeout(pendingRenderTimer);
+
+      const delay = window.SIMULATED_LATENCY_MS !== undefined ? window.SIMULATED_LATENCY_MS : LATENCY_MS;
+      pendingRenderTimer = setTimeout(() => {
+        renderRows();
+        networkIndicator.style.display = 'none';
+      }, delay);
+    }
+
+    function renderRows() {
+      const scrollTop = container.scrollTop;
+      const startIndex = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - BUFFER);
+      const endIndex = Math.min(TOTAL_ROWS, startIndex + VISIBLE_COUNT + (BUFFER * 2));
+
+      const topHeight = startIndex * ROW_HEIGHT;
+      const bottomHeight = Math.max(0, (TOTAL_ROWS - endIndex) * ROW_HEIGHT);
+
+      topSpacer.style.height = `${topHeight}px`;
+      bottomSpacer.style.height = `${bottomHeight}px`;
+
+      const visibleSlice = dataset.slice(startIndex, endIndex);
+      const fragment = document.createDocumentFragment();
+
+      for (const item of visibleSlice) {
+        const row = document.createElement('div');
+        row.className = 'grid-row';
+        row.setAttribute('role', 'row');
+        row.setAttribute('data-row-id', item.id);
+
+        row.innerHTML = `
+          <div class="cell cell-id" role="gridcell">${item.id}</div>
+          <div class="cell" role="gridcell">${item.name}</div>
+          <div class="cell cell-dept" role="gridcell">${item.dept}</div>
+          <div class="cell" role="gridcell">${item.role}</div>
+          <div class="cell" role="gridcell">${item.email}</div>
+          <div class="cell cell-salary" role="gridcell">${item.salary}</div>
+          <div class="cell cell-status" role="gridcell">${item.status}</div>
+          <div class="cell cell-hidden" role="gridcell">${item.internalCode}</div>
+        `;
+        fragment.appendChild(row);
+      }
+
+      rowsContainer.innerHTML = '';
+      rowsContainer.appendChild(fragment);
+
+      statsBar.textContent = `Total Dataset: ${TOTAL_ROWS} rows | Currently in DOM: ${visibleSlice.length} rows | Scroll Top: ${Math.round(scrollTop)}px | Range: [${startIndex}..${endIndex}]`;
+    }
+
+    container.addEventListener('scroll', onScroll);
+    renderRows(); // Initial load
+  </script>
+</body>
+</html>

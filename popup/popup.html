@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Table Extractor</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <img src="../assets/icons/icon-48.png" alt="Icon" class="brand-icon">
+        <div>
+          <h1 class="brand-title">Table Extractor</h1>
+          <span class="brand-subtitle" id="active-domain">Loading...</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <span id="tier-badge" class="badge badge-free">FREE</span>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Loading State -->
+      <div id="loading-state" class="state-card">
+        <div class="spinner"></div>
+        <p>Scanning page for tables & data grids...</p>
+      </div>
+
+      <!-- No Tables State -->
+      <div id="empty-state" class="state-card" style="display: none;">
+        <div class="empty-icon">📊</div>
+        <h3>No Tables Detected</h3>
+        <p>Could not find standard tables or data grids on this page.</p>
+        <button id="btn-rescan" class="btn btn-secondary">Rescan Page</button>
+      </div>
+
+      <!-- Active Table View -->
+      <div id="table-view" style="display: none;">
+        <!-- Table Selector -->
+        <div class="form-group">
+          <label for="table-select" class="form-label">Detected Tables & Grids:</label>
+          <select id="table-select" class="form-select"></select>
+        </div>
+
+        <!-- Table Info Card -->
+        <div class="card info-card">
+          <div class="info-row">
+            <span class="info-label">Visible Dimensions:</span>
+            <span class="info-val" id="info-dimensions">0 rows × 0 cols</span>
+          </div>
+          <div class="info-row" id="virt-status-row">
+            <span class="info-label">Grid Type:</span>
+            <span id="table-type-badge" class="badge badge-standard">Static Table</span>
+          </div>
+        </div>
+
+        <!-- Virtualization Alert Banner -->
+        <div id="virt-banner" class="alert alert-info" style="display: none;">
+          <div class="alert-icon">⚡</div>
+          <div class="alert-body">
+            <strong>Virtualized Table Detected</strong>
+            <p id="virt-banner-text">This table appears to load more rows as you scroll. Capture all rows?</p>
+          </div>
+        </div>
+
+        <!-- Horizontal Virtualization Warning -->
+        <div id="h-virt-warning" class="alert alert-warning" style="display: none;">
+          <div class="alert-icon">⚠️</div>
+          <div class="alert-body">
+            <strong>Horizontal Virtualization Detected</strong>
+            <p>Horizontal virtualization not yet supported — some columns may be missing</p>
+          </div>
+        </div>
+
+        <!-- Capture Options Card -->
+        <div class="card options-card" id="options-card">
+          <span class="section-subtitle">Capture Options:</span>
+
+          <!-- Max Rows -->
+          <div class="form-group option-item">
+            <div class="option-header-row">
+              <label for="opt-max-rows" class="form-label">Max rows limit:</label>
+              <span class="option-hint">default 5,000</span>
+            </div>
+            <input type="number" id="opt-max-rows" class="form-input" min="1" max="50000" value="5000">
+          </div>
+
+          <!-- Speed Toggle -->
+          <div class="form-group option-item">
+            <label class="form-label">Speed / Settle Delay:</label>
+            <div class="speed-toggle-group">
+              <button type="button" id="btn-speed-normal" class="speed-btn active" data-speed="normal">Normal (3s)</button>
+              <button type="button" id="btn-speed-slow" class="speed-btn" data-speed="slow">Slow site (6s)</button>
+            </div>
+          </div>
+
+          <!-- Hidden Columns Checkbox -->
+          <div class="option-item">
+            <label class="checkbox-label">
+              <input type="checkbox" id="opt-hidden-cols">
+              <span>Include hidden columns</span>
+            </label>
+          </div>
+
+          <!-- Row Range Selection -->
+          <div class="option-item">
+            <label class="checkbox-label">
+              <input type="checkbox" id="opt-row-range-enable">
+              <span>Row range selection</span>
+            </label>
+            <div class="range-inputs" id="range-inputs-container" style="display: none;">
+              <input type="number" id="opt-range-from" class="form-input range-input" placeholder="From" min="1" value="1">
+              <span class="range-separator">to</span>
+              <input type="number" id="opt-range-to" class="form-input range-input" placeholder="To" min="1" value="100">
+            </div>
+          </div>
+        </div>
+
+        <!-- Export Formats Selection -->
+        <div class="card format-card">
+          <span class="section-subtitle">Select Export Formats:</span>
+          <div class="checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="fmt-csv" checked>
+              <span>CSV</span>
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="fmt-xlsx">
+              <span>XLSX (Excel)</span>
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="fmt-json">
+              <span>JSON</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Error Alert Banner -->
+        <div id="table-error-banner" class="alert alert-danger" style="display: none;">
+          <div class="alert-icon">⚠️</div>
+          <div class="alert-body">
+            <span id="table-error-text"></span>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="action-buttons">
+          <button id="btn-capture-all" class="btn btn-primary btn-block">
+            <span class="btn-icon">⚡</span>
+            <span id="btn-capture-all-text">Capture all</span>
+            <span class="badge badge-pro-small">PRO</span>
+          </button>
+          <button id="btn-export-visible" class="btn btn-secondary btn-block">
+            Just visible rows
+          </button>
+        </div>
+      </div>
+
+      <!-- Capture in Progress View -->
+      <div id="capture-progress-view" class="card progress-card" style="display: none;">
+        <div class="progress-header">
+          <div class="spinner-small"></div>
+          <h3 id="progress-heading">Accumulating Table Rows...</h3>
+        </div>
+        <p id="progress-counter" class="progress-counter">Scanned 0 rows so far...</p>
+        <div class="progress-track">
+          <div id="progress-bar-fill" class="progress-bar-fill" style="width: 0%;"></div>
+        </div>
+        <div id="capture-warning" class="alert alert-warning" style="display: none; margin-top: 10px;">
+          <span id="capture-warning-text"></span>
+        </div>
+        <div class="progress-actions">
+          <button id="btn-cancel-capture" class="btn btn-danger btn-sm">Cancel Capture</button>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <button id="btn-open-license" class="btn-link">License & Pro Status</button>
+      <span class="footer-version">v1.0.0</span>
+    </footer>
+
+    <!-- Pro Upgrade Modal -->
+    <div id="pro-modal" class="modal-backdrop" style="display: none;">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>⚡ Upgrade to Pro</h3>
+          <button id="btn-close-modal" class="btn-close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="pro-features-list">
+            <div class="feature-item">
+              <span class="feature-icon">✨</span>
+              <span><strong>Virtualized Table Capture:</strong> Scroll and accumulate thousands of dynamically rendered rows.</span>
+            </div>
+            <div class="feature-item">
+              <span class="feature-icon">📦</span>
+              <span><strong>Multi-Format Simultaneous Export:</strong> Download CSV, XLSX, and JSON in one click.</span>
+            </div>
+            <div class="feature-item">
+              <span class="feature-icon">🗜️</span>
+              <span><strong>ZIP Bundling:</strong> Package all exports into a neat ZIP archive.</span>
+            </div>
+          </div>
+
+          <div class="activation-section">
+            <label for="input-license-key" class="form-label">Already have a license key?</label>
+            <div class="input-group">
+              <input type="text" id="input-license-key" class="form-input" placeholder="e.g. PRO-TEST-PASS">
+              <button id="btn-activate-pro" class="btn btn-primary">Activate</button>
+            </div>
+            <p id="activation-msg" class="msg-text"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
