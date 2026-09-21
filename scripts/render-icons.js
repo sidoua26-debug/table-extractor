@@ -86,7 +86,7 @@ const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512
 const masterSvgPath = path.join(iconDir, 'icon-master.svg');
 fs.writeFileSync(masterSvgPath, svgContent, 'utf8');
 
-const sizes = [16, 48, 128];
+const sizes = [16, 48, 128, 300];
 for (const size of sizes) {
   const destPath = path.join(iconDir, `icon-${size}.png`);
   execSync(`rsvg-convert -w ${size} -h ${size} "${masterSvgPath}" -o "${destPath}"`);
