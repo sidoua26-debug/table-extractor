@@ -5,7 +5,8 @@
   "scripts": {
     "render-icons": "node scripts/render-icons.js",
     "package": "node scripts/package.js",
-    "test": "node test/run-tests.js"
+    "test": "node test/run-tests.js",
+    "test:unpacked": "node test/test-unpacked.js"
   },
   "type": "module",
   "keywords": ["chrome-extension", "table-extractor", "data-grid", "virtualized-table", "csv", "xlsx", "json"],

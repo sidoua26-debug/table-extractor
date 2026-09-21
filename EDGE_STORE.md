@@ -31,8 +31,8 @@
 - **Category**: Productivity *(Secondary: Developer tools)*
 - **Version**: 1.0.0
 - **Support Contact / Email**: sidoua26@gmail.com
-- **Privacy Policy URL**: https://bulkgrab-licensing.sidoua26.workers.dev/privacy
-- **Website URL**: https://bulkgrab-licensing.sidoua26.workers.dev/privacy
+- **Privacy Policy URL**: https://bulkgrab-licensing.sidoua26.workers.dev/privacy/table-extractor
+- **Website URL**: https://bulkgrab-licensing.sidoua26.workers.dev/privacy/table-extractor
 
 ### Detailed Description
 ```markdown
@@ -61,7 +61,7 @@ Modern web apps only render the 15-20 rows visible on screen to save memory. Tab
 - Adjustable Settle Speeds: Switch between Normal (3s) and Slow-Site (6s) settle delays for heavy or lagging pages.
 
 • 100% Privacy & Local Processing
-All scanning, row accumulation, and file generation happen entirely in your local browser sandbox. Your data never leaves your computer and is never sent to external servers.
+All table detection, row accumulation, and file generation happen entirely inside your local browser sandbox. Your webpage data and extracted tables never leave your computer and are never sent to external servers (licensing network requests are made only to our backend if you choose to purchase or activate a Pro license).
 
 • Simple Lifetime Access
 Use basic static exports completely free forever, or upgrade to Pro for a one-time payment of $9.99 for unlimited virtualized capture and multi-format simultaneous export.
@@ -118,12 +118,12 @@ Testing Instructions:
    Visit any web page with an AG Grid or virtualized scroll container (e.g. https://www.ag-grid.com/example/). The extension will identify the grid as "Virtualized Grid" and offer "Capture all" or "Just visible rows".
 5. To test Pro tier features:
    Click "License & Pro Status" in the footer, enter the test review gift code:
-   TE-GIFT-TEST
+   TE-GIFT-PUT-CODE-HERE
    Click "Activate". Pro status will be activated immediately, unlocking all export formats and virtualized capture.
 
 All table processing occurs entirely on the client side in the user's browser.
 Support contact: sidoua26@gmail.com
-Privacy policy: https://bulkgrab-licensing.sidoua26.workers.dev/privacy
+Privacy policy: https://bulkgrab-licensing.sidoua26.workers.dev/privacy/table-extractor
 
 Thank you!
 ```

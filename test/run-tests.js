@@ -275,6 +275,28 @@ async function run() {
     }
   }
 
+  // 6. Worker dedicated /privacy/table-extractor route
+  {
+    const req = new Request('https://worker.local/privacy/table-extractor');
+    const res = await worker.fetch(req, mockEnv);
+    assert(res.status === 200, 'Worker /privacy/table-extractor returns HTTP 200');
+    assert(res.headers.get('Content-Type')?.includes('text/html'), 'Worker /privacy/table-extractor returns text/html');
+    const html = await res.text();
+    assert(html.includes('Table Extractor Privacy Policy'), 'Privacy policy contains Table Extractor Privacy Policy heading');
+    assert(html.includes('What stays on your device'), 'Privacy policy contains "What stays on your device" section');
+    assert(html.includes('sidoua26@gmail.com'), 'Privacy policy contains support email sidoua26@gmail.com');
+    assert(html.includes('NOWPayments'), 'Privacy policy contains NOWPayments reference');
+  }
+
+  // 7. Worker /privacy without route alteration (BulkGrab default preserved)
+  {
+    const req = new Request('https://worker.local/privacy');
+    const res = await worker.fetch(req, mockEnv);
+    assert(res.status === 200, 'Worker /privacy returns HTTP 200');
+    const html = await res.text();
+    assert(html.includes('BulkGrab Privacy Policy'), 'Existing /privacy route continues to serve BulkGrab privacy policy by default');
+  }
+
   // --- BROWSER TESTS: Puppeteer ---
   console.log('\n--- 2. Testing Browser Virtualized Table Capture ---');
   const browser = await puppeteer.launch({
