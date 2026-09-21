@@ -18,6 +18,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const testPagePath = path.resolve(__dirname, 'virtualized-table.html');
 const slowTestPagePath = path.resolve(__dirname, 'virtualized-table-slow.html');
+const agGridTestPagePath = path.resolve(__dirname, 'ag-grid-fixture.html');
 const contentScriptPath = path.resolve(__dirname, '..', 'content.js');
 const contentScriptCode = fs.readFileSync(contentScriptPath, 'utf8');
 
@@ -322,6 +323,7 @@ async function run() {
     assert(staticResult.rows.length === 10, 'Static table extracted exactly 10 rows', `got ${staticResult.rows.length}`);
     assert(staticResult.headers.length === 5, 'Static table extracted 5 headers');
     assert(staticResult.rows[0][0] === 'PRJ-101', 'First static row matches PRJ-101');
+    assert(staticResult.rows.every(r => r.length === staticResult.headers.length), 'Static table all rows have exact cell count equal to header count (5)');
 
     // TEST 3: Full Virtualized Capture with Stable IDs (2,000 Rows)
     console.log('\n[Browser Test] 3. Virtualized Capture with Stable IDs (2,000 rows)');
@@ -343,6 +345,7 @@ async function run() {
     assert(virtCaptureResult.rows.length === 2000, 'Rows array length equals 2,000');
     assert(virtCaptureResult.finalScrollTop === 0, 'Scroll position restored to original 0px', `was ${virtCaptureResult.finalScrollTop}`);
     assert(!virtCaptureResult.warning, 'No unexpected warnings on normal virtual capture');
+    assert(virtCaptureResult.rows.every(r => r.length === virtCaptureResult.headers.length), 'All 2,000 virtual rows have exact cell count equal to header count (7)');
 
     // Verify first and last rows
     assert(virtCaptureResult.rows[0][0] === 'EMP-00001', 'First captured row is EMP-00001', `got ${virtCaptureResult.rows[0]?.[0]}`);
@@ -361,6 +364,7 @@ async function run() {
 
     assert(rangeResult.totalRows === 101, 'Row range [500..600] extracted exactly 101 rows', `got ${rangeResult.totalRows}`);
     assert(rangeResult.rows.length === 101, 'Rows array length equals 101');
+    assert(rangeResult.rows.every(r => r.length === rangeResult.headers.length), 'All ranged rows have exact cell count equal to header count (7)');
     assert(rangeResult.rows[0][0] === 'EMP-00500', 'First row is EMP-00500', `got ${rangeResult.rows[0]?.[0]}`);
     assert(rangeResult.rows[100][0] === 'EMP-00600', 'Last row is EMP-00600', `got ${rangeResult.rows[100]?.[0]}`);
 
@@ -405,6 +409,7 @@ async function run() {
 
     assert(hashCaptureResult.totalRows === 2000, 'Content hash deduplication captured all 2,000 rows without IDs!', `got ${hashCaptureResult.totalRows}`);
     assert(hashCaptureResult.finalScrollTop === 150, 'Non-zero initial scroll position restored correctly (150px)', `was ${hashCaptureResult.finalScrollTop}`);
+    assert(hashCaptureResult.rows.every(r => r.length === hashCaptureResult.headers.length), 'All hash-captured rows have exact cell count equal to header count (7)');
 
     // Re-enable IDs for subsequent tests
     await page.click('#toggle-ids');
@@ -498,6 +503,7 @@ async function run() {
     assert(slowCaptureResult.totalRows === 2000, 'Captured all 2,000 rows on slow network fixture', `got ${slowCaptureResult.totalRows}`);
     assert(slowCaptureResult.rows[0][0] === 'EMP-00001', 'First slow row is EMP-00001');
     assert(slowCaptureResult.rows[1999][0] === 'EMP-02000', 'Last slow row is EMP-02000');
+    assert(slowCaptureResult.rows.every(r => r.length === slowCaptureResult.headers.length), 'All slow-captured rows have exact cell count equal to header count (7)');
 
     // Reset simulated latency to 0 so tests 9-11 execute fast without waiting
     await slowPage.evaluate(() => {
@@ -517,6 +523,7 @@ async function run() {
 
     assert(maxRowsResult.totalRows === 250, 'Capture stopped after reaching maxRows limit of 250', `got ${maxRowsResult.totalRows}`);
     assert(maxRowsResult.warning && maxRowsResult.warning.includes('max rows limit of 250'), 'Warning contains max rows limit notification', maxRowsResult.warning);
+    assert(maxRowsResult.rows.every(r => r.length === maxRowsResult.headers.length), 'All maxRows rows have exact cell count equal to header count (7)');
 
     // TEST 10: Row Range Selection Option [from..to]
     console.log('\n[Browser Test] 10. Row Range Selection Option [50..150]');
@@ -532,6 +539,7 @@ async function run() {
     assert(rowRangeResult.totalRows === 101, 'Row range [50..150] extracted exactly 101 rows', `got ${rowRangeResult.totalRows}`);
     assert(rowRangeResult.rows[0][0] === 'EMP-00050', 'First ranged row is EMP-00050', `got ${rowRangeResult.rows[0]?.[0]}`);
     assert(rowRangeResult.rows[100][0] === 'EMP-00150', 'Last ranged row is EMP-00150', `got ${rowRangeResult.rows[100]?.[0]}`);
+    assert(rowRangeResult.rows.every(r => r.length === rowRangeResult.headers.length), 'All row-range rows on slow fixture have exact cell count equal to header count (7)');
 
     // TEST 11: Include Hidden Columns Option
     console.log('\n[Browser Test] 11. Include Hidden Columns Option');
@@ -553,11 +561,131 @@ async function run() {
 
     assert(!withoutHidden.headers.includes('Internal Code'), 'Default capture excludes hidden "Internal Code" header');
     assert(withoutHidden.rows[0].length === 7, 'Default capture row has 7 cells');
+    assert(withoutHidden.rows.every(r => r.length === withoutHidden.headers.length), 'All rows without hidden cols match header count (7)');
     assert(withHidden.headers.includes('Internal Code'), 'includeHiddenCols: true includes "Internal Code" header');
     assert(withHidden.rows[0].length === 8, 'includeHiddenCols: true row has 8 cells');
+    assert(withHidden.rows.every(r => r.length === withHidden.headers.length), 'All rows with hidden cols match header count (8)');
     assert(withHidden.rows[0][7].startsWith('SEC-KEY-'), 'Hidden column value extracted successfully');
 
     await slowPage.close();
+
+    // --- 4. Testing AG Grid Layout Fixture ---
+    console.log('\n--- 4. Testing AG Grid Layout Fixture (ag-grid-fixture.html) ---');
+    const agGridPage = await browser.newPage();
+    await agGridPage.setViewport({ width: 1400, height: 900 });
+    await agGridPage.goto(`file://${agGridTestPagePath}`, { waitUntil: 'domcontentloaded' });
+    await agGridPage.evaluate(contentScriptCode);
+
+    // TEST 12: AG Grid Table Detection & Leaf Header Schema
+    console.log('\n[Browser Test] 12. AG Grid Table Detection & Leaf Header Schema');
+    const agScanResult = await agGridPage.evaluate(() => {
+      return window.TableExtractor.scanPageTables();
+    });
+
+    assert(agScanResult.length >= 1, 'Discovered AG Grid table on fixture page');
+    const agTable = agScanResult[0];
+    assert(agTable.isVirtualized === true, 'AG Grid fixture detected as isVirtualized: true');
+    assert(agTable.headers.length === 9, 'AG Grid extracted exactly 9 leaf headers (excluded group & selection)', `got ${agTable.headers.length}`);
+
+    const expectedAgHeaders = [
+      'Row Number',
+      'Name',
+      'Language',
+      'Country',
+      'Game Name',
+      'Bought',
+      'Bank Balance',
+      'Rating',
+      'Total Winnings'
+    ];
+    assert(JSON.stringify(agTable.headers) === JSON.stringify(expectedAgHeaders), 'Header names strictly match expected leaf columns without group headers or empty columns');
+    assert(!agTable.headers.includes('Participant') && !agTable.headers.includes('Game of Choice') && !agTable.headers.includes('Performance'), 'Group headers correctly excluded from schema');
+    assert(!agTable.headers.includes(''), 'No empty string column in headers');
+
+    // TEST 13: AG Grid Virtualized Capture & 1:1 Column Alignment
+    console.log('\n[Browser Test] 13. AG Grid Virtualized Capture & 1:1 Column Alignment (100 Rows)');
+    const agCaptureResult = await agGridPage.evaluate(async () => {
+      return await window.TableExtractor.runVirtualizedCapture('te-table-1', {
+        scrollIncrement: 400,
+        settleDelayMs: 25,
+        maxSettleTimeoutMs: 500
+      });
+    });
+
+    assert(agCaptureResult.totalRows === 100, 'Captured all 100 rows in AG Grid dataset', `got ${agCaptureResult.totalRows}`);
+    assert(agCaptureResult.rows.every(r => r.length === agCaptureResult.headers.length), 'Every single extracted row has cell count strictly equal to header count (9)');
+
+    // Verify row 0: values match headers 1:1
+    const row0 = agCaptureResult.rows[0];
+    assert(row0[0] === '1', 'Row 0 cell 0 (Row Number) is "1"', `got ${row0[0]}`);
+    assert(row0[1] === 'Tony Smith', 'Row 0 cell 1 (Name) is "Tony Smith"', `got ${row0[1]}`);
+    assert(row0[2] === 'English', 'Row 0 cell 2 (Language) is "English"', `got ${row0[2]}`);
+    assert(row0[3] === 'Ireland', 'Row 0 cell 3 (Country) is "Ireland"', `got ${row0[3]}`);
+    assert(row0[4] === 'Chess', 'Row 0 cell 4 (Game Name) is "Chess"', `got ${row0[4]}`);
+    assert(row0[5] === 'true', 'Row 0 cell 5 (Bought) boolean checkbox is "true"', `got ${row0[5]}`);
+    assert(row0[6] === '$2,123', 'Row 0 cell 6 (Bank Balance) is "$2,123"', `got ${row0[6]}`);
+    assert(row0[7] === '2 stars', 'Row 0 cell 7 (Rating) image alt is "2 stars"', `got ${row0[7]}`);
+    assert(row0[8] === '$403,541', 'Row 0 cell 8 (Total Winnings) is "$403,541"', `got ${row0[8]}`);
+
+    // Verify row 1:
+    const row1 = agCaptureResult.rows[1];
+    assert(row1[0] === '2', 'Row 1 cell 0 (Row Number) is "2"', `got ${row1[0]}`);
+    assert(row1[1] === 'Andrew Connell', 'Row 1 cell 1 (Name) is "Andrew Connell"', `got ${row1[1]}`);
+    assert(row1[5] === 'false', 'Row 1 cell 5 (Bought) boolean checkbox is "false"', `got ${row1[5]}`);
+
+    // TEST 14: CSV Export from AG Grid Capture (No blank column A, no double commas)
+    console.log('\n[Browser Test] 14. CSV Export Format & Column Alignment Verification');
+    const agCsv = tableDataToCSV(agCaptureResult);
+    const csvLines = agCsv.replace(/^\uFEFF/, '').trim().split(/\r?\n/);
+    assert(csvLines[0] === 'Row Number,Name,Language,Country,Game Name,Bought,Bank Balance,Rating,Total Winnings', 'CSV header line has clean columns with no extra commas');
+    assert(!csvLines[0].includes(',,'), 'CSV header line contains no double commas / empty headers');
+    assert(csvLines[1].startsWith('1,Tony Smith,English,Ireland,Chess,true,'), 'CSV row 1 starts with "1,Tony Smith" - no empty leading column A');
+
+    await agGridPage.close();
+
+    // --- 5. Testing Live AG Grid Demo ---
+    console.log('\n--- 5. Testing Live AG Grid Demo (https://www.ag-grid.com/example/) ---');
+    try {
+      const livePage = await browser.newPage();
+      await livePage.setViewport({ width: 1400, height: 900 });
+      await livePage.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+
+      await livePage.goto('https://www.ag-grid.com/example/', { waitUntil: 'networkidle2', timeout: 35000 });
+      await livePage.waitForSelector('.ag-header-row-column', { timeout: 20000 });
+      await livePage.evaluate(contentScriptCode);
+
+      const liveScanResult = await livePage.evaluate(() => {
+        return window.TableExtractor.scanPageTables();
+      });
+
+      assert(liveScanResult.length >= 1, 'Discovered live AG Grid on ag-grid.com/example/');
+      const liveTable = liveScanResult[0];
+      assert(liveTable.headers.length === 9, 'Live AG Grid has exactly 9 columns', `got ${liveTable.headers.length}`);
+      assert(liveTable.headers[0] === 'Row Number', 'Live AG Grid first column is "Row Number"');
+      assert(liveTable.headers[1] === 'Name', 'Live AG Grid second column is "Name"');
+      assert(!liveTable.headers.includes('Participant'), 'Live AG Grid excludes group headers');
+
+      // Capture a sample of rows
+      const liveCaptureResult = await livePage.evaluate(async () => {
+        return await window.TableExtractor.runVirtualizedCapture('te-table-1', {
+          maxRows: 10,
+          scrollIncrement: 400,
+          settleDelayMs: 60
+        });
+      });
+
+      assert(liveCaptureResult.rows.length >= 5, 'Captured sample rows from live AG Grid', `got ${liveCaptureResult.rows.length}`);
+      assert(liveCaptureResult.rows.every(r => r.length === liveCaptureResult.headers.length), 'Every live row has exact cell count equal to header count (9)');
+
+      const liveCsv = tableDataToCSV(liveCaptureResult);
+      const liveCsvLines = liveCsv.replace(/^\uFEFF/, '').trim().split('\n');
+      assert(!liveCsvLines[0].includes(',,'), 'Live CSV header contains no double commas');
+      assert(liveCsvLines[1].startsWith('1,Tony Smith,'), 'Live CSV row 1 starts with "1,Tony Smith," (no empty column A)');
+
+      await livePage.close();
+    } catch (liveErr) {
+      console.warn('  ⚠️ Note: Live ag-grid.com test skipped or network failed:', liveErr.message);
+    }
 
   } finally {
     await browser.close();

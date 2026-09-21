@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AG Grid Layout Fixture</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 20px;
+      background: #182230;
+      color: #fff;
+    }
+    .ag-root {
+      position: relative;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      overflow: hidden;
+      width: 100%;
+      background: #0f172a;
+    }
+    .ag-header {
+      background: #1e293b;
+      border-bottom: 2px solid #0284c7;
+    }
+    .ag-header-row {
+      display: flex;
+      height: 32px;
+      align-items: center;
+      border-bottom: 1px solid #334155;
+    }
+    .ag-header-row-group {
+      background: #0f172a;
+      font-weight: bold;
+      color: #94a3b8;
+    }
+    .ag-header-row-column {
+      font-weight: 600;
+      color: #f8fafc;
+    }
+    .ag-header-row-filter {
+      background: #1e293b;
+      height: 28px;
+    }
+    .ag-header-cell, .ag-header-group-cell {
+      padding: 4px 8px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      border-right: 1px solid #334155;
+      box-sizing: border-box;
+      font-size: 12px;
+    }
+    .col-row-num { width: 60px; }
+    .col-select { width: 40px; text-align: center; }
+    .col-name { width: 140px; }
+    .col-lang { width: 100px; }
+    .col-country { width: 100px; }
+    .col-game { width: 120px; }
+    .col-bought { width: 80px; text-align: center; }
+    .col-balance { width: 100px; text-align: right; }
+    .col-rating { width: 80px; text-align: center; }
+    .col-winnings { width: 110px; text-align: right; }
+
+    .ag-body-viewport {
+      height: 400px;
+      overflow-y: auto;
+      overflow-anchor: none;
+      position: relative;
+    }
+    .ag-row {
+      display: flex;
+      height: 36px;
+      align-items: center;
+      border-bottom: 1px solid #1e293b;
+      box-sizing: border-box;
+    }
+    .ag-row:nth-child(even) {
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .ag-cell {
+      padding: 4px 8px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      border-right: 1px solid #1e293b;
+      box-sizing: border-box;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <h1>AG Grid Layout Simulation</h1>
+  <p>Replicates multi-row header (group + leaf + filter), rowheader `#`, selection checkbox, and data cells.</p>
+
+  <div id="ag-grid-test" class="ag-root ag-layout-normal virtual-grid" role="grid" data-virtualized="true">
+    <div class="ag-header" role="presentation">
+      <!-- Row 1: Header Group Row -->
+      <div class="ag-header-row ag-header-row-group ag-focus-managed" role="row">
+        <div class="ag-header-group-cell ag-header-group-cell-with-group col-row-num" col-id="0_0" aria-colindex="1" role="columnheader"></div>
+        <div class="ag-header-group-cell ag-header-group-cell-with-group col-select" col-id="0_1" aria-colindex="2" role="columnheader"></div>
+        <div class="ag-header-group-cell ag-header-group-cell-with-group" style="width: 340px;" col-id="0_2" aria-colindex="3" role="columnheader">Participant</div>
+        <div class="ag-header-group-cell ag-header-group-cell-with-group" style="width: 200px;" col-id="1_0" aria-colindex="6" role="columnheader">Game of Choice</div>
+        <div class="ag-header-group-cell ag-header-group-cell-with-group" style="width: 290px;" col-id="performance_0" aria-colindex="8" role="columnheader">Performance</div>
+      </div>
+
+      <!-- Row 2: Leaf Column Header Row -->
+      <div class="ag-header-row ag-header-row-column ag-header-row-not-first ag-focus-managed" role="row">
+        <div class="ag-header-cell col-row-num ag-row-number-header" col-id="ag-Grid-RowNumbersColumn" aria-colindex="1" aria-label="Row Number" role="columnheader">
+          <span class="ag-header-cell-text"></span>
+        </div>
+        <div class="ag-header-cell col-select ag-selection-checkbox" col-id="ag-Grid-SelectionColumn" aria-colindex="2" role="columnheader" aria-label="Press Space to toggle all rows selection">
+          <input type="checkbox" tabindex="-1">
+        </div>
+        <div class="ag-header-cell col-name" col-id="name" aria-colindex="3" role="columnheader">
+          <span class="ag-header-cell-text">Name</span>
+        </div>
+        <div class="ag-header-cell col-lang" col-id="language" aria-colindex="4" role="columnheader">
+          <span class="ag-header-cell-text">Language</span>
+        </div>
+        <div class="ag-header-cell col-country" col-id="country" aria-colindex="5" role="columnheader">
+          <span class="ag-header-cell-text">Country</span>
+        </div>
+        <div class="ag-header-cell col-game" col-id="game.name" aria-colindex="6" role="columnheader">
+          <span class="ag-header-cell-text">Game Name</span>
+        </div>
+        <div class="ag-header-cell col-bought" col-id="game.bought" aria-colindex="7" role="columnheader">
+          <span class="ag-header-cell-text">Bought</span>
+        </div>
+        <div class="ag-header-cell col-balance" col-id="bankBalance" aria-colindex="8" role="columnheader">
+          <span class="ag-header-cell-text">Bank Balance</span>
+        </div>
+        <div class="ag-header-cell col-rating" col-id="rating" aria-colindex="9" role="columnheader">
+          <span class="ag-header-cell-text">Rating</span>
+        </div>
+        <div class="ag-header-cell col-winnings" col-id="totalWinnings" aria-colindex="10" role="columnheader">
+          <span class="ag-header-cell-text">Total Winnings</span>
+        </div>
+      </div>
+
+      <!-- Row 3: Floating Filter Row -->
+      <div class="ag-header-row ag-header-row-filter ag-header-row-not-first" role="row">
+        <div class="ag-header-cell ag-floating-filter col-row-num" col-id="ag-Grid-RowNumbersColumn" aria-colindex="1" role="columnheader"></div>
+        <div class="ag-header-cell ag-floating-filter col-select" col-id="ag-Grid-SelectionColumn" aria-colindex="2" role="columnheader"></div>
+        <div class="ag-header-cell ag-floating-filter col-name" col-id="name" aria-colindex="3" role="columnheader"><input type="text" placeholder="Filter..."></div>
+        <div class="ag-header-cell ag-floating-filter col-lang" col-id="language" aria-colindex="4" role="columnheader"><input type="text" placeholder="Filter..."></div>
+        <div class="ag-header-cell ag-floating-filter col-country" col-id="country" aria-colindex="5" role="columnheader"><input type="text" placeholder="Filter..."></div>
+        <div class="ag-header-cell ag-floating-filter col-game" col-id="game.name" aria-colindex="6" role="columnheader"><input type="text" placeholder="Filter..."></div>
+        <div class="ag-header-cell ag-floating-filter col-bought" col-id="game.bought" aria-colindex="7" role="columnheader"><input type="text" placeholder="Filter..."></div>
+        <div class="ag-header-cell ag-floating-filter col-balance" col-id="bankBalance" aria-colindex="8" role="columnheader"><input type="text" placeholder="Filter..."></div>
+        <div class="ag-header-cell ag-floating-filter col-rating" col-id="rating" aria-colindex="9" role="columnheader"><input type="text" placeholder="Filter..."></div>
+        <div class="ag-header-cell ag-floating-filter col-winnings" col-id="totalWinnings" aria-colindex="10" role="columnheader"><input type="text" placeholder="Filter..."></div>
+      </div>
+    </div>
+
+    <!-- Body Viewport with Virtualized Rows -->
+    <div class="ag-body-viewport" id="ag-scroll-viewport">
+      <div id="top-spacer" style="height: 0px;"></div>
+      <div id="ag-rows-container"></div>
+      <div id="bottom-spacer" style="height: 3600px;"></div>
+    </div>
+  </div>
+
+  <script>
+    const TOTAL_RECORDS = 100;
+    const ROW_HEIGHT = 36;
+    const VISIBLE_COUNT = 15;
+    const BUFFER = 5;
+
+    const names = ["Tony Smith", "Andrew Connell", "Kevin Flanagan", "Bricker McGee", "Harper Thornton", "Sophia Loren", "Marco Rossi", "Elena Gomez", "Lucas Silva", "Amelie Poulain"];
+    const langs = ["English", "Swedish", "Spanish", "French", "Portuguese", "Italian", "Italian", "Spanish", "Portuguese", "French"];
+    const countries = ["Ireland", "Sweden", "Uruguay", "France", "Portugal", "Italy", "Italy", "Spain", "Brazil", "France"];
+    const games = ["Chess", "Bul", "Rithmomachy", "Kalah", "Game of the Generals", "Checkers", "Go", "Backgammon", "Shogi", "Scrabble"];
+
+    const records = [];
+    for (let i = 1; i <= TOTAL_RECORDS; i++) {
+      const idx = (i - 1) % names.length;
+      records.push({
+        num: i,
+        name: names[idx],
+        lang: langs[idx],
+        country: countries[idx],
+        game: games[idx],
+        bought: i % 2 === 1,
+        balance: "$" + (2000 + (i * 123) % 90000).toLocaleString(),
+        rating: (i % 4 + 1) + " stars",
+        winnings: "$" + (400000 + (i * 3541) % 500000).toLocaleString()
+      });
+    }
+
+    const viewport = document.getElementById("ag-scroll-viewport");
+    const container = document.getElementById("ag-rows-container");
+    const topSpacer = document.getElementById("top-spacer");
+    const bottomSpacer = document.getElementById("bottom-spacer");
+
+    function renderVisibleRows() {
+      const scrollTop = viewport.scrollTop;
+      const startIndex = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - BUFFER);
+      const endIndex = Math.min(TOTAL_RECORDS, Math.ceil((scrollTop + 400) / ROW_HEIGHT) + BUFFER);
+
+      topSpacer.style.height = (startIndex * ROW_HEIGHT) + "px";
+      bottomSpacer.style.height = ((TOTAL_RECORDS - endIndex) * ROW_HEIGHT) + "px";
+
+      container.innerHTML = "";
+
+      for (let i = startIndex; i < endIndex; i++) {
+        const item = records[i];
+        const row = document.createElement("div");
+        row.className = "ag-row " + (i % 2 === 0 ? "ag-row-even" : "ag-row-odd");
+        row.setAttribute("role", "row");
+        row.setAttribute("data-row-id", "row-" + item.num);
+
+        row.innerHTML = `
+          <div class="ag-cell col-row-num" role="rowheader" col-id="ag-Grid-RowNumbersColumn" aria-colindex="1">${item.num}</div>
+          <div class="ag-cell col-select ag-selection-checkbox" role="gridcell" col-id="ag-Grid-SelectionColumn" aria-colindex="2">
+            <input type="checkbox" tabindex="-1">
+          </div>
+          <div class="ag-cell col-name" role="gridcell" col-id="name" aria-colindex="3">${item.name}</div>
+          <div class="ag-cell col-lang" role="gridcell" col-id="language" aria-colindex="4">${item.lang}</div>
+          <div class="ag-cell col-country" role="gridcell" col-id="country" aria-colindex="5">${item.country}</div>
+          <div class="ag-cell col-game" role="gridcell" col-id="game.name" aria-colindex="6">${item.game}</div>
+          <div class="ag-cell col-bought" role="gridcell" col-id="game.bought" aria-colindex="7">
+            <div class="ag-checkbox-wrapper ${item.bought ? 'ag-checked' : ''}">
+              <input type="checkbox" ${item.bought ? 'checked' : ''} tabindex="-1">
+            </div>
+          </div>
+          <div class="ag-cell col-balance" role="gridcell" col-id="bankBalance" aria-colindex="8">${item.balance}</div>
+          <div class="ag-cell col-rating" role="gridcell" col-id="rating" aria-colindex="9">
+            <span><img src="../images/star.svg" alt="${item.rating}" width="12" height="12"></span>
+          </div>
+          <div class="ag-cell col-winnings" role="gridcell" col-id="totalWinnings" aria-colindex="10">${item.winnings}</div>
+        `;
+
+        container.appendChild(row);
+      }
+    }
+
+    viewport.addEventListener("scroll", renderVisibleRows);
+    renderVisibleRows();
+  </script>
+</body>
+</html>
