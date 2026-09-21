@@ -107,15 +107,15 @@
           </div>
 
           <!-- Row Range Selection -->
-          <div class="option-item">
-            <label class="checkbox-label">
-              <input type="checkbox" id="opt-row-range-enable">
-              <span>Row range selection</span>
-            </label>
-            <div class="range-inputs" id="range-inputs-container" style="display: none;">
-              <input type="number" id="opt-range-from" class="form-input range-input" placeholder="From" min="1" value="1">
+          <div class="form-group option-item">
+            <div class="option-header-row">
+              <label class="form-label">Row range selection:</label>
+              <span class="option-hint">optional (leave blank for all)</span>
+            </div>
+            <div class="range-inputs">
+              <input type="number" id="opt-range-start" class="form-input range-input" placeholder="Start row (e.g. 500)" min="1">
               <span class="range-separator">to</span>
-              <input type="number" id="opt-range-to" class="form-input range-input" placeholder="To" min="1" value="100">
+              <input type="number" id="opt-range-end" class="form-input range-input" placeholder="End row (e.g. 600)" min="1">
             </div>
           </div>
         </div>
@@ -208,11 +208,21 @@
             </div>
           </div>
 
+          <div class="checkout-section">
+            <button type="button" id="btn-create-invoice" class="btn btn-primary btn-block">
+              <span class="btn-icon">🪙</span>
+              <span>Pay with Crypto — $9.99</span>
+            </button>
+            <p class="crypto-guidance-text">
+              Click to generate a fresh invoice and open NOWPayments in a new tab. After paying, copy the <strong>Payment ID</strong> shown at the top of the payment page and paste it below to activate Pro.
+            </p>
+          </div>
+
           <div class="activation-section">
-            <label for="input-license-key" class="form-label">Already have a license key?</label>
+            <label for="input-license-key" class="form-label">Enter Payment ID or Gift Code:</label>
             <div class="input-group">
-              <input type="text" id="input-license-key" class="form-input" placeholder="e.g. PRO-TEST-PASS">
-              <button id="btn-activate-pro" class="btn btn-primary">Activate</button>
+              <input type="text" id="input-license-key" class="form-input" placeholder="e.g. 1234567890 or TE-GIFT-...">
+              <button type="button" id="btn-activate-pro" class="btn btn-secondary">Activate</button>
             </div>
             <p id="activation-msg" class="msg-text"></p>
           </div>

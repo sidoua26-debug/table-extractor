@@ -275,13 +275,12 @@ body {
   align-items: center;
   gap: 8px;
   margin-top: 4px;
-  padding-left: 22px;
 }
 
 .range-input {
-  width: 75px;
-  padding: 5px 8px;
-  font-size: 11.5px;
+  flex: 1;
+  padding: 6px 10px;
+  font-size: 12px;
 }
 
 .range-separator {
@@ -552,6 +551,20 @@ body {
 
 .feature-icon {
   font-size: 14px;
+}
+
+.checkout-section {
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.crypto-guidance-text {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.4;
 }
 
 .activation-section {

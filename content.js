@@ -504,6 +504,9 @@
     const includeHiddenCols = Boolean(options.includeHiddenCols);
     const maxRows = options.maxRows || 5000;
     const rowRange = options.rowRange || null;
+    const effectiveMaxRows = (rowRange && typeof rowRange.to === 'number')
+      ? Math.max(maxRows, rowRange.to)
+      : maxRows;
 
     const headers = extractHeaders(targetElement, includeHiddenCols);
     const accumulatedMap = new Map();
@@ -578,8 +581,13 @@
         }
 
         // Check user-configured Max Rows cap
-        if (accumulatedMap.size >= maxRows) {
+        if (accumulatedMap.size >= effectiveMaxRows) {
           warning = warning ? `${warning} Stopped after reaching max rows limit of ${maxRows}.` : `Stopped after reaching max rows limit of ${maxRows}.`;
+          break;
+        }
+
+        // Early stop if rowRange.to has been captured
+        if (rowRange && typeof rowRange.to === 'number' && accumulatedMap.size >= rowRange.to) {
           break;
         }
 
@@ -664,14 +672,16 @@
     }
 
     let rows = Array.from(accumulatedMap.values());
-    if (rows.length > maxRows) {
-      rows = rows.slice(0, maxRows);
+    if (rows.length > effectiveMaxRows) {
+      rows = rows.slice(0, effectiveMaxRows);
     }
 
     // Handle optional row range selection [from..to]
-    if (rowRange && typeof rowRange.from === 'number' && typeof rowRange.to === 'number') {
-      const fromIdx = Math.max(0, rowRange.from - 1);
-      const toIdx = Math.min(rows.length, rowRange.to);
+    if (rowRange && (typeof rowRange.from === 'number' || typeof rowRange.to === 'number')) {
+      const from = typeof rowRange.from === 'number' ? rowRange.from : 1;
+      const to = typeof rowRange.to === 'number' ? rowRange.to : rows.length;
+      const fromIdx = Math.max(0, from - 1);
+      const toIdx = Math.min(rows.length, to);
       rows = rows.slice(fromIdx, toIdx);
     }
     return {

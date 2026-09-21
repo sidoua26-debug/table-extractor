@@ -69,16 +69,25 @@ async function run() {
   // --- UNIT TESTS: License Management & Feature Gating ---
   console.log('\n--- 2. Testing License Management & Pro Gating ---');
   // Mock chrome.storage.local for Node environment
-  const mockStorage = {};
+  const mockStorage = { __testMockVerification__: true };
   globalThis.chrome = {
     storage: {
       local: {
         get: async (key) => {
           if (typeof key === 'string') return { [key]: mockStorage[key] };
+          if (Array.isArray(key)) {
+            const res = {};
+            key.forEach(k => { res[k] = mockStorage[k]; });
+            return res;
+          }
           return { ...mockStorage };
         },
         set: async (obj) => {
           Object.assign(mockStorage, obj);
+        },
+        remove: async (key) => {
+          if (Array.isArray(key)) key.forEach(k => delete mockStorage[k]);
+          else delete mockStorage[key];
         }
       }
     }
@@ -93,14 +102,25 @@ async function run() {
   assert((await canUseZipExport()) === false, 'canUseZipExport() blocked for Free tier');
   assert((await canUseMultiFormatExport()) === false, 'canUseMultiFormatExport() blocked for Free tier');
 
+  // Hardcoded test backdoor PRO-TEST-PASS is removed and must be rejected!
+  const proTestPass = await activateLicense('PRO-TEST-PASS');
+  assert(proTestPass.success === false, 'PRO-TEST-PASS backdoor key is completely removed and rejected');
+
+  // Friendly guard against accidentally pasting Invoice ID or URL
+  const invoiceIdAct = await activateLicense('4743404425');
+  assert(invoiceIdAct.success === false && invoiceIdAct.isInvoiceId === true, 'Pasting 10-digit invoice ID is rejected with guidance');
+
+  const invoiceUrlAct = await activateLicense('https://nowpayments.io/payment/?iid=4743404425');
+  assert(invoiceUrlAct.success === false && invoiceUrlAct.isInvoiceId === true, 'Pasting invoice URL is rejected with guidance');
+
   // Invalid key activation
-  const invalidAct = await activateLicense('INVALID');
+  const invalidAct = await activateLicense('INVALID_KEY');
   assert(invalidAct.success === false, 'Invalid license key rejected');
 
-  // Valid key activation
-  const validAct = await activateLicense('PRO-TEST-PASS');
-  assert(validAct.success === true, 'Test license key PRO-TEST-PASS accepted');
-  assert((await isProUser()) === true, 'isProUser() returns true after activation');
+  // Gift code activation (TE-GIFT-...)
+  const giftAct = await activateLicense('TE-GIFT-TEST');
+  assert(giftAct.success === true, 'Gift code TE-GIFT-TEST accepted');
+  assert((await isProUser()) === true, 'isProUser() returns true after gift activation');
   assert((await getLicenseStatus()) === 'pro', 'getLicenseStatus() returns "pro"');
   assert((await canUseVirtualizedCapture()) === true, 'canUseVirtualizedCapture() unlocked for Pro tier');
   assert((await canUseZipExport()) === true, 'canUseZipExport() unlocked for Pro tier');
@@ -109,6 +129,142 @@ async function run() {
   // Reset to Free
   await resetLicense();
   assert((await isProUser()) === false, 'resetLicense() restores Free tier');
+  assert((await getLicenseStatus()) === 'free', 'getLicenseStatus() restored to "free"');
+
+  // Payment mock activation (mock_finished_payment)
+  const mockSuccessAct = await activateLicense('mock_finished_payment');
+  assert(mockSuccessAct.success === true, 'Mock finished payment accepted');
+  assert((await isProUser()) === true, 'isProUser() returns true after payment activation');
+
+  // Reset to Free again
+  await resetLicense();
+
+  // Test Cloudflare Worker product separation directly
+  console.log('\n--- 2b. Testing Cloudflare Worker Multi-Product Isolation ---');
+  const { default: worker } = await import('../../bulkgrab/cloudflare-worker/worker.js');
+  const mockEnv = {
+    NOWPAYMENTS_API_KEY: 'test_nowpayments_key',
+    GIFT_CODES: 'bg-gift-1,te-gift-2,standard-gift',
+    TE_GIFT_CODES: 'te-exclusive-gift'
+  };
+
+  // 1. Worker verify-payment with product=table-extractor and TE_PRO_ order
+  {
+    const origFetch = globalThis.fetch;
+    globalThis.fetch = async (url) => {
+      if (url.includes('/payment/')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            payment_id: '999111',
+            payment_status: 'finished',
+            order_id: 'TE_PRO_123456_test',
+            price_amount: 9.99,
+            price_currency: 'usd',
+            pay_currency: 'usdtbsc'
+          }),
+          text: async () => ''
+        };
+      }
+      return origFetch(url);
+    };
+
+    try {
+      const req = new Request('https://worker.local/api/verify-payment?payment_id=999111&product=table-extractor');
+      const res = await worker.fetch(req, mockEnv);
+      const data = await res.json();
+      assert(data.valid === true, 'Worker accepts TE_PRO_ payment for Table Extractor');
+      assert(data.status === 'pro', 'Worker sets status: pro for TE_PRO_ payment');
+      assert(data.message.includes('Table Extractor Pro tier activated'), 'Worker returns Table Extractor confirmation message');
+    } finally {
+      globalThis.fetch = origFetch;
+    }
+  }
+
+  // 2. Cross-product rejection: BG_PRO_ payment attempted on Table Extractor
+  {
+    const origFetch = globalThis.fetch;
+    globalThis.fetch = async (url) => {
+      if (url.includes('/payment/')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            payment_id: '999222',
+            payment_status: 'finished',
+            order_id: 'BG_PRO_123456_bulkgrab_order',
+            price_amount: 9.99,
+            price_currency: 'usd',
+            pay_currency: 'usdtbsc'
+          }),
+          text: async () => ''
+        };
+      }
+      return origFetch(url);
+    };
+
+    try {
+      const req = new Request('https://worker.local/api/verify-payment?payment_id=999222&product=table-extractor');
+      const res = await worker.fetch(req, mockEnv);
+      const data = await res.json();
+      assert(data.valid === false, 'Worker rejects BulkGrab BG_PRO_ payment when verifying Table Extractor');
+      assert(data.message.includes('This payment is not a Table Extractor Pro purchase'), 'Worker returns descriptive cross-product rejection error');
+    } finally {
+      globalThis.fetch = origFetch;
+    }
+  }
+
+  // 3. Worker gift code isolation: TE gift code accepted for Table Extractor
+  {
+    const req = new Request('https://worker.local/api/verify-payment?payment_id=te-gift-2&product=table-extractor');
+    const res = await worker.fetch(req, mockEnv);
+    const data = await res.json();
+    assert(data.valid === true && data.source === 'gift', 'Worker accepts te- prefixed gift code for Table Extractor');
+  }
+
+  // 4. Worker gift code isolation: BulkGrab gift code rejected for Table Extractor
+  {
+    const req = new Request('https://worker.local/api/verify-payment?payment_id=bg-gift-1&product=table-extractor');
+    const res = await worker.fetch(req, mockEnv);
+    const data = await res.json();
+    assert(data.valid === false, 'Worker rejects BulkGrab gift code for Table Extractor');
+  }
+
+  // 5. Worker create-payment creates TE_PRO_ order for Table Extractor
+  {
+    const origFetch = globalThis.fetch;
+    let createdPayload = null;
+    globalThis.fetch = async (url, opts) => {
+      if (url.includes('/invoice')) {
+        createdPayload = JSON.parse(opts.body);
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            id: '555444333',
+            invoice_url: 'https://nowpayments.io/payment/?iid=555444333',
+            order_id: createdPayload.order_id,
+            price_amount: 9.99,
+            pay_currency: 'usdtbsc'
+          }),
+          text: async () => ''
+        };
+      }
+      return origFetch(url, opts);
+    };
+
+    try {
+      const req = new Request('https://worker.local/api/create-payment?product=table-extractor', { method: 'POST' });
+      const res = await worker.fetch(req, mockEnv);
+      const data = await res.json();
+      assert(data.ok === true, 'Worker /api/create-payment succeeds for Table Extractor');
+      assert(createdPayload.order_id.startsWith('TE_PRO_'), 'Generated order_id starts with TE_PRO_');
+      assert(createdPayload.order_description === 'Table Extractor Pro Lifetime License', 'Generated order description specifies Table Extractor');
+    } finally {
+      globalThis.fetch = origFetch;
+    }
+  }
 
   // --- BROWSER TESTS: Puppeteer ---
   console.log('\n--- 2. Testing Browser Virtualized Table Capture ---');
@@ -183,6 +339,37 @@ async function run() {
     // Verify first and last rows
     assert(virtCaptureResult.rows[0][0] === 'EMP-00001', 'First captured row is EMP-00001', `got ${virtCaptureResult.rows[0]?.[0]}`);
     assert(virtCaptureResult.rows[1999][0] === 'EMP-02000', 'Last captured row is EMP-02000', `got ${virtCaptureResult.rows[1999]?.[0]}`);
+
+    // TEST 3b: Row-Range Capture [500..600] on virtualized-table.html
+    console.log('\n[Browser Test] 3b. Row-Range Selection [500..600] on 2,000-Row Virtual Table');
+    const rangeResult = await page.evaluate(async () => {
+      return await window.TableExtractor.runVirtualizedCapture('te-table-1', {
+        rowRange: { from: 500, to: 600 },
+        scrollIncrement: 600,
+        settleDelayMs: 25,
+        maxSettleTimeoutMs: 500
+      });
+    });
+
+    assert(rangeResult.totalRows === 101, 'Row range [500..600] extracted exactly 101 rows', `got ${rangeResult.totalRows}`);
+    assert(rangeResult.rows.length === 101, 'Rows array length equals 101');
+    assert(rangeResult.rows[0][0] === 'EMP-00500', 'First row is EMP-00500', `got ${rangeResult.rows[0]?.[0]}`);
+    assert(rangeResult.rows[100][0] === 'EMP-00600', 'Last row is EMP-00600', `got ${rangeResult.rows[100]?.[0]}`);
+
+    // Verify all 101 rows are sequential with 0 duplicates
+    const rowIds = rangeResult.rows.map(r => r[0]);
+    const uniqueRowIds = new Set(rowIds);
+    assert(uniqueRowIds.size === 101, 'All 101 extracted rows are unique (0 duplicates)', `unique count: ${uniqueRowIds.size}`);
+
+    let isStrictlySequential = true;
+    for (let i = 0; i < 101; i++) {
+      const expectedId = `EMP-${String(500 + i).padStart(5, '0')}`;
+      if (rowIds[i] !== expectedId) {
+        isStrictlySequential = false;
+        break;
+      }
+    }
+    assert(isStrictlySequential, 'All 101 rows EMP-00500 through EMP-00600 are strictly sequential in order');
 
     // TEST 4: Fallback Deduplication (Content Hash when data-row-id is missing)
     console.log('\n[Browser Test] 4. Fallback Deduplication via Cell Content Hash (without stable IDs)');

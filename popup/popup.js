@@ -2,7 +2,7 @@
  * Table Extractor - Popup Controller
  */
 
-import { isProUser, getLicenseStatus, activateLicense } from '../lib/license.js';
+import { isProUser, getLicenseStatus, activateLicense, createPaymentInvoice } from '../lib/license.js';
 import { tableDataToCSV } from '../lib/csv.js';
 import { tableDataToXLSX } from '../lib/xlsx.js';
 import { tableDataToJSON } from '../lib/json.js';
@@ -28,10 +28,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const btnSpeedNormal = document.getElementById('btn-speed-normal');
   const btnSpeedSlow = document.getElementById('btn-speed-slow');
   const optHiddenColsEl = document.getElementById('opt-hidden-cols');
-  const optRowRangeEnableEl = document.getElementById('opt-row-range-enable');
-  const rangeInputsContainer = document.getElementById('range-inputs-container');
-  const optRangeFromEl = document.getElementById('opt-range-from');
-  const optRangeToEl = document.getElementById('opt-range-to');
+  const optRangeStartEl = document.getElementById('opt-range-start');
+  const optRangeEndEl = document.getElementById('opt-range-end');
   const tableErrorBanner = document.getElementById('table-error-banner');
   const tableErrorText = document.getElementById('table-error-text');
 
@@ -50,6 +48,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const btnOpenLicense = document.getElementById('btn-open-license');
   const proModal = document.getElementById('pro-modal');
   const btnCloseModal = document.getElementById('btn-close-modal');
+  const btnCreateInvoice = document.getElementById('btn-create-invoice');
   const inputLicenseKey = document.getElementById('input-license-key');
   const btnActivatePro = document.getElementById('btn-activate-pro');
   const activationMsg = document.getElementById('activation-msg');
@@ -70,11 +69,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     selectedSpeed = 'slow';
     btnSpeedSlow.classList.add('active');
     btnSpeedNormal.classList.remove('active');
-  });
-
-  // Range inputs toggle listener
-  optRowRangeEnableEl?.addEventListener('change', () => {
-    rangeInputsContainer.style.display = optRowRangeEnableEl.checked ? 'flex' : 'none';
   });
 
   // 1. Initialize Active Tab
@@ -261,12 +255,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     const includeHiddenCols = Boolean(optHiddenColsEl?.checked);
     let rowRange = null;
 
-    if (optRowRangeEnableEl?.checked) {
-      const from = parseInt(optRangeFromEl?.value, 10);
-      const to = parseInt(optRangeToEl?.value, 10);
-      if (!isNaN(from) && !isNaN(to)) {
-        rowRange = { from, to };
-      }
+    const startVal = parseInt(optRangeStartEl?.value, 10);
+    const endVal = parseInt(optRangeEndEl?.value, 10);
+    const hasStart = !isNaN(startVal) && startVal > 0;
+    const hasEnd = !isNaN(endVal) && endVal > 0;
+
+    if (hasStart && hasEnd) {
+      rowRange = { from: Math.min(startVal, endVal), to: Math.max(startVal, endVal) };
+    } else if (hasStart) {
+      rowRange = { from: startVal, to: 999999 };
+    } else if (hasEnd) {
+      rowRange = { from: 1, to: endVal };
     }
 
     return {
@@ -305,19 +304,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       if (response && response.status === 'ok') {
         let exportData = response.data;
-        // Slice if row range is active
-        if (optRowRangeEnableEl?.checked) {
-          const from = parseInt(optRangeFromEl?.value, 10);
-          const to = parseInt(optRangeToEl?.value, 10);
-          if (!isNaN(from) && !isNaN(to)) {
-            const fromIdx = Math.max(0, from - 1);
-            const toIdx = Math.min(exportData.rows.length, to);
-            exportData = {
-              ...exportData,
-              rows: exportData.rows.slice(fromIdx, toIdx),
-              totalRows: Math.max(0, toIdx - fromIdx)
-            };
-          }
+        const options = getCaptureOptions();
+        // Slice if row range is set
+        if (options.rowRange) {
+          const fromIdx = Math.max(0, options.rowRange.from - 1);
+          const toIdx = Math.min(exportData.rows.length, options.rowRange.to);
+          exportData = {
+            ...exportData,
+            rows: exportData.rows.slice(fromIdx, toIdx),
+            totalRows: Math.max(0, toIdx - fromIdx)
+          };
         }
         exportTableData(exportData, currentTable.title);
       } else {
@@ -464,23 +460,66 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (e.target === proModal) closeProModal();
   });
 
+  // Create NOWPayments invoice button
+  btnCreateInvoice?.addEventListener('click', async () => {
+    try {
+      btnCreateInvoice.disabled = true;
+      btnCreateInvoice.innerHTML = '<span class="spinner-small"></span> Creating invoice...';
+      activationMsg.textContent = '';
+      activationMsg.className = 'msg-text';
+
+      const res = await createPaymentInvoice();
+      if (res.ok && res.invoiceUrl) {
+        if (typeof chrome !== 'undefined' && chrome.tabs?.create) {
+          chrome.tabs.create({ url: res.invoiceUrl });
+        } else {
+          window.open(res.invoiceUrl, '_blank');
+        }
+        activationMsg.textContent = 'Invoice opened in a new tab! Once paid, copy the Payment ID and paste it below.';
+        activationMsg.className = 'msg-text msg-success';
+      } else {
+        activationMsg.textContent = res.error || 'Failed to create payment invoice. Please try again.';
+        activationMsg.className = 'msg-text msg-error';
+      }
+    } catch (err) {
+      activationMsg.textContent = 'Error: ' + err.message;
+      activationMsg.className = 'msg-text msg-error';
+    } finally {
+      btnCreateInvoice.disabled = false;
+      btnCreateInvoice.innerHTML = '<span class="btn-icon">🪙</span><span>Pay with Crypto — $9.99</span>';
+    }
+  });
+
   btnActivatePro.addEventListener('click', async () => {
     const key = inputLicenseKey.value.trim();
     if (!key) {
-      activationMsg.textContent = 'Please enter a key.';
+      activationMsg.textContent = 'Please enter a Payment ID or gift code.';
       activationMsg.className = 'msg-text msg-error';
       return;
     }
 
-    const res = await activateLicense(key);
-    if (res.success) {
-      activationMsg.textContent = res.message;
-      activationMsg.className = 'msg-text msg-success';
-      await refreshLicenseUI();
-      setTimeout(closeProModal, 1200);
-    } else {
-      activationMsg.textContent = res.message || 'Activation failed.';
+    try {
+      btnActivatePro.disabled = true;
+      btnActivatePro.textContent = 'Verifying...';
+      activationMsg.textContent = 'Checking payment status with server...';
+      activationMsg.className = 'msg-text';
+
+      const res = await activateLicense(key);
+      if (res.success) {
+        activationMsg.textContent = res.message;
+        activationMsg.className = 'msg-text msg-success';
+        await refreshLicenseUI();
+        setTimeout(closeProModal, 1500);
+      } else {
+        activationMsg.textContent = res.message || 'Activation failed.';
+        activationMsg.className = 'msg-text msg-error';
+      }
+    } catch (err) {
+      activationMsg.textContent = 'Error: ' + err.message;
       activationMsg.className = 'msg-text msg-error';
+    } finally {
+      btnActivatePro.disabled = false;
+      btnActivatePro.textContent = 'Activate';
     }
   });
 
