@@ -474,6 +474,87 @@
   }
 
   /**
+   * Extracts a numeric row sequence/order key from a row element or its cell values.
+   */
+  function extractRowOrderKey(rowElement, values = null, schema = null) {
+    if (!rowElement || !(rowElement instanceof HTMLElement)) {
+      return null;
+    }
+
+    // 1. row-index or data-row-index (AG Grid standard: 0-based integer, e.g. row-index="0")
+    const rowIndexAttr = rowElement.getAttribute('row-index') || rowElement.getAttribute('data-row-index');
+    if (rowIndexAttr !== null && rowIndexAttr !== '') {
+      const parsed = parseInt(rowIndexAttr, 10);
+      if (!isNaN(parsed)) return parsed;
+    }
+
+    // 2. aria-rowindex (ARIA standard: 1-based integer, e.g. aria-rowindex="2")
+    const ariaRowIndexAttr = rowElement.getAttribute('aria-rowindex');
+    if (ariaRowIndexAttr !== null && ariaRowIndexAttr !== '') {
+      const parsed = parseInt(ariaRowIndexAttr, 10);
+      if (!isNaN(parsed)) return parsed;
+    }
+
+    // 3. row-id or data-row-id or id (e.g. row-id="0", data-row-id="row-1", id="row-42")
+    const idAttr = 
+      rowElement.getAttribute('row-id') ||
+      rowElement.getAttribute('data-row-id') ||
+      rowElement.getAttribute('data-id') ||
+      rowElement.getAttribute('id') ||
+      rowElement.dataset?.rowId ||
+      rowElement.dataset?.id;
+
+    if (idAttr) {
+      if (/^\d+$/.test(idAttr)) {
+        const parsed = parseInt(idAttr, 10);
+        if (!isNaN(parsed)) return parsed;
+      }
+      const match = idAttr.match(/^[a-zA-Z_\-]+(\d+)$/);
+      if (match) {
+        const parsed = parseInt(match[1], 10);
+        if (!isNaN(parsed)) return parsed;
+      }
+    }
+
+    // 4. HTMLTableRowElement.rowIndex (standard <tr> element)
+    if (typeof rowElement.rowIndex === 'number' && rowElement.rowIndex >= 0) {
+      return rowElement.rowIndex;
+    }
+
+    // 5. CSS transform translateY or top (common in virtualized grids like react-window, TanStack)
+    const styleTransform = rowElement.style ? rowElement.style.transform : '';
+    if (styleTransform) {
+      const match = styleTransform.match(/translateY\(\s*(-?\d+(?:\.\d+)?)\s*px\)/i);
+      if (match) {
+        const parsed = parseFloat(match[1]);
+        if (!isNaN(parsed)) return parsed;
+      }
+    }
+    const styleTop = rowElement.style ? rowElement.style.top : '';
+    if (styleTop && /^-?\d+(?:\.\d+)?px$/i.test(styleTop)) {
+      const parsed = parseFloat(styleTop);
+      if (!isNaN(parsed)) return parsed;
+    }
+
+    // 6. Dedicated sequence / row number column in cell values
+    if (schema && values && values.length > 0) {
+      const rowNumColIdx = schema.findIndex(s => 
+        s.colId === 'ag-Grid-RowNumbersColumn' || 
+        /^(row\s*(number|no|#)?|#|no\.?|idx|index)$/i.test((s.name || '').trim())
+      );
+      if (rowNumColIdx !== -1 && values[rowNumColIdx]) {
+        const cellVal = String(values[rowNumColIdx]).trim().replace(/,/g, '');
+        if (/^\d+$/.test(cellVal)) {
+          const parsed = parseInt(cellVal, 10);
+          if (!isNaN(parsed)) return parsed;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
    * Evaluates if a table is a candidate for virtualization.
    */
   function detectVirtualizationCandidate(element) {
@@ -786,6 +867,7 @@
 
     const { headers, schema } = buildColumnSchema(targetElement, includeHiddenCols);
     const accumulatedMap = new Map();
+    let encounterCount = 0;
     let warning = null;
     let capped = false;
     let aborted = false;
@@ -811,7 +893,12 @@
         }
         const key = getRowIdentityKey(rowEl, values);
         if (!accumulatedMap.has(key)) {
-          accumulatedMap.set(key, values);
+          const orderKey = extractRowOrderKey(rowEl, values, schema);
+          accumulatedMap.set(key, {
+            values,
+            orderKey,
+            encounterIndex: encounterCount++
+          });
           count++;
         }
       }
@@ -822,8 +909,37 @@
       // 1. Scroll to top
       if (container.scrollTop > 0) {
         container.scrollTop = 0;
+        try {
+          container.dispatchEvent(new Event('scroll', { bubbles: true }));
+        } catch (_) {}
+
+        await new Promise(r => {
+          if (typeof requestAnimationFrame !== 'undefined') {
+            requestAnimationFrame(() => setTimeout(r, 60));
+          } else {
+            setTimeout(r, 60);
+          }
+        });
+
+        await waitForDOMSettle(container, Math.max(settleDelayMs, 80), Math.max(maxSettleTimeoutMs, 1000), abortSignal);
+
+        const visibleRows = getVisibleRowElements(targetElement);
+        if (visibleRows.length > 0) {
+          let minKey = Infinity;
+          for (const vr of visibleRows) {
+            const k = extractRowOrderKey(vr);
+            if (typeof k === 'number' && !isNaN(k) && k < minKey) {
+              minKey = k;
+            }
+          }
+          if (minKey > 2 && minKey !== Infinity) {
+            await new Promise(r => setTimeout(r, 100));
+            await waitForDOMSettle(container, Math.max(settleDelayMs, 100), 1000, abortSignal);
+          }
+        }
+      } else {
+        await waitForDOMSettle(container, settleDelayMs, 300, abortSignal);
       }
-      await waitForDOMSettle(container, settleDelayMs, 600, abortSignal);
 
       // Initial capture
       extractRows();
@@ -951,7 +1067,49 @@
       activeCaptureAbortController = null;
     }
 
-    let rows = Array.from(accumulatedMap.values());
+    const allEntries = Array.from(accumulatedMap.values());
+
+    // Determine if we have reliable order keys (numeric on >= 80% of rows)
+    const validOrderKeysCount = allEntries.filter(e => typeof e.orderKey === 'number' && !isNaN(e.orderKey)).length;
+    const hasOrderKeys = allEntries.length > 0 && (validOrderKeysCount / allEntries.length >= 0.8);
+
+    let sortedEntries;
+    if (hasOrderKeys) {
+      sortedEntries = allEntries.slice().sort((a, b) => {
+        const aHasKey = typeof a.orderKey === 'number' && !isNaN(a.orderKey);
+        const bHasKey = typeof b.orderKey === 'number' && !isNaN(b.orderKey);
+        if (aHasKey && bHasKey) {
+          if (a.orderKey !== b.orderKey) {
+            return a.orderKey - b.orderKey;
+          }
+        } else if (aHasKey) {
+          return -1;
+        } else if (bHasKey) {
+          return 1;
+        }
+        return a.encounterIndex - b.encounterIndex;
+      });
+    } else {
+      // No reliable orderable keys available across rows
+      sortedEntries = allEntries;
+
+      // Check if partial order keys indicate non-monotonic / scrambled ordering
+      const partialKeys = allEntries.map(e => e.orderKey).filter(k => typeof k === 'number' && !isNaN(k));
+      let isScrambled = false;
+      for (let i = 1; i < partialKeys.length; i++) {
+        if (partialKeys[i] < partialKeys[i - 1]) {
+          isScrambled = true;
+          break;
+        }
+      }
+
+      if (isScrambled || (!hasOrderKeys && allEntries.length > 50)) {
+        const orderWarn = 'No reliable row sequence attributes were available; rows were exported in scroll-encounter order.';
+        warning = warning ? `${warning} ${orderWarn}` : orderWarn;
+      }
+    }
+
+    let rows = sortedEntries.map(e => e.values);
     if (rows.length > effectiveMaxRows) {
       rows = rows.slice(0, effectiveMaxRows);
     }
@@ -1045,6 +1203,7 @@
     buildColumnSchema,
     isSelectionColumn,
     getRowIdentityKey,
+    extractRowOrderKey,
     hashString
   };
 })();

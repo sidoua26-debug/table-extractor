@@ -209,6 +209,9 @@
         row.className = "ag-row " + (i % 2 === 0 ? "ag-row-even" : "ag-row-odd");
         row.setAttribute("role", "row");
         row.setAttribute("data-row-id", "row-" + item.num);
+        row.setAttribute("row-id", String(i));
+        row.setAttribute("row-index", String(i));
+        row.setAttribute("aria-rowindex", String(i + 2));
 
         row.innerHTML = `
           <div class="ag-cell col-row-num" role="rowheader" col-id="ag-Grid-RowNumbersColumn" aria-colindex="1">${item.num}</div>

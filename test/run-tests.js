@@ -633,6 +633,63 @@ async function run() {
     assert(row1[1] === 'Andrew Connell', 'Row 1 cell 1 (Name) is "Andrew Connell"', `got ${row1[1]}`);
     assert(row1[5] === 'false', 'Row 1 cell 5 (Bought) boolean checkbox is "false"', `got ${row1[5]}`);
 
+    // Verify strict sequential ascending order for all 100 rows
+    const isAllInOrder = agCaptureResult.rows.every((r, idx) => r[0] === String(idx + 1));
+    assert(isAllInOrder, 'All 100 rows strictly in sequential ascending order 1..100');
+
+    // TEST 13b: Pre-scrolled AG Grid Virtualized Capture & Sequential Ordering
+    console.log('\n[Browser Test] 13b. Pre-scrolled AG Grid Virtualized Capture & Sequential Ordering');
+    // Pre-scroll viewport to 360px (rendering rows 6-27 initially in DOM)
+    await agGridPage.evaluate(() => {
+      const vp = document.getElementById('ag-scroll-viewport');
+      vp.scrollTop = 360;
+      vp.dispatchEvent(new Event('scroll'));
+    });
+
+    const prescrolledVisible = await agGridPage.evaluate(() => {
+      return Array.from(document.querySelectorAll('.ag-row')).map(r => r.getAttribute('data-row-id'));
+    });
+    assert(prescrolledVisible[0] === 'row-6', 'Pre-scrolled fixture begins at row-6 in DOM');
+
+    const prescrolledCapture = await agGridPage.evaluate(async () => {
+      return await window.TableExtractor.runVirtualizedCapture('te-table-1', {
+        scrollIncrement: 250,
+        settleDelayMs: 25,
+        maxSettleTimeoutMs: 500
+      });
+    });
+
+    assert(prescrolledCapture.totalRows === 100, 'Captured all 100 rows despite starting pre-scrolled at row 6');
+    assert(prescrolledCapture.rows.every((r, idx) => r[0] === String(idx + 1)), 'All 100 rows in pre-scrolled capture strictly in sequential ascending order 1..100');
+    assert(prescrolledCapture.rows[0][0] === '1', 'Pre-scrolled capture row 0 is 1 (rows 1-4 NOT inserted after row 14)');
+    assert(prescrolledCapture.rows[1][0] === '2', 'Pre-scrolled capture row 1 is 2');
+    assert(prescrolledCapture.rows[2][0] === '3', 'Pre-scrolled capture row 2 is 3');
+    assert(prescrolledCapture.rows[3][0] === '4', 'Pre-scrolled capture row 3 is 4');
+    assert(prescrolledCapture.rows[4][0] === '5', 'Pre-scrolled capture row 4 is 5');
+    assert(prescrolledCapture.rows[14][0] === '15', 'Pre-scrolled capture row 14 is 15');
+
+    // TEST 13c: Row Range Selection [10..25] on Pre-scrolled AG Grid
+    console.log('\n[Browser Test] 13c. Row Range Selection [10..25] on Pre-scrolled AG Grid');
+    await agGridPage.evaluate(() => {
+      const vp = document.getElementById('ag-scroll-viewport');
+      vp.scrollTop = 360;
+      vp.dispatchEvent(new Event('scroll'));
+    });
+
+    const rangedAgResult = await agGridPage.evaluate(async () => {
+      return await window.TableExtractor.runVirtualizedCapture('te-table-1', {
+        rowRange: { from: 10, to: 25 },
+        scrollIncrement: 250,
+        settleDelayMs: 25,
+        maxSettleTimeoutMs: 500
+      });
+    });
+
+    assert(rangedAgResult.totalRows === 16, 'Row range [10..25] extracted exactly 16 rows', `got ${rangedAgResult.totalRows}`);
+    assert(rangedAgResult.rows[0][0] === '10', 'First ranged row is 10', `got ${rangedAgResult.rows[0]?.[0]}`);
+    assert(rangedAgResult.rows[15][0] === '25', 'Last ranged row is 25', `got ${rangedAgResult.rows[15]?.[0]}`);
+    assert(rangedAgResult.rows.every((r, idx) => r[0] === String(10 + idx)), 'All ranged rows strictly sequential 10..25');
+
     // TEST 14: CSV Export from AG Grid Capture (No blank column A, no double commas)
     console.log('\n[Browser Test] 14. CSV Export Format & Column Alignment Verification');
     const agCsv = tableDataToCSV(agCaptureResult);
@@ -650,8 +707,9 @@ async function run() {
       await livePage.setViewport({ width: 1400, height: 900 });
       await livePage.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
 
-      await livePage.goto('https://www.ag-grid.com/example/', { waitUntil: 'networkidle2', timeout: 35000 });
-      await livePage.waitForSelector('.ag-header-row-column', { timeout: 20000 });
+      await livePage.goto('https://www.ag-grid.com/example/', { waitUntil: 'domcontentloaded', timeout: 15000 });
+      await livePage.waitForSelector('.ag-header-row-column', { timeout: 15000 });
+      await livePage.waitForSelector('.ag-row', { timeout: 15000 });
       await livePage.evaluate(contentScriptCode);
 
       const liveScanResult = await livePage.evaluate(() => {
@@ -665,26 +723,43 @@ async function run() {
       assert(liveTable.headers[1] === 'Name', 'Live AG Grid second column is "Name"');
       assert(!liveTable.headers.includes('Participant'), 'Live AG Grid excludes group headers');
 
-      // Capture a sample of rows
+      // Capture a sample of 25 rows
       const liveCaptureResult = await livePage.evaluate(async () => {
         return await window.TableExtractor.runVirtualizedCapture('te-table-1', {
-          maxRows: 10,
+          maxRows: 25,
           scrollIncrement: 400,
-          settleDelayMs: 60
+          settleDelayMs: 80
         });
       });
 
-      assert(liveCaptureResult.rows.length >= 5, 'Captured sample rows from live AG Grid', `got ${liveCaptureResult.rows.length}`);
+      assert(liveCaptureResult.rows.length >= 15, 'Captured sample rows from live AG Grid', `got ${liveCaptureResult.rows.length}`);
       assert(liveCaptureResult.rows.every(r => r.length === liveCaptureResult.headers.length), 'Every live row has exact cell count equal to header count (9)');
 
+      // Extract Row Number column values
+      const liveRowNums = liveCaptureResult.rows.map(r => r[0]);
+      console.log('  Live AG Grid Row Numbers sequence:', liveRowNums.join(', '));
+
+      // Strict ascending sequence check
+      assert(liveRowNums[0] === '1', 'Live Row 0 is "1"');
+      assert(liveRowNums[1] === '2', 'Live Row 1 is "2"');
+      assert(liveRowNums[2] === '3', 'Live Row 2 is "3"');
+      assert(liveRowNums[3] === '4', 'Live Row 3 is "4"');
+      assert(liveRowNums[4] === '5', 'Live Row 4 is "5"');
+
+      const isStrictAscending = liveRowNums.every((val, idx) => {
+        const num = parseInt(val, 10);
+        return !isNaN(num) && num === idx + 1;
+      });
+      assert(isStrictAscending, `Live AG Grid row numbers are in strict ascending order 1..${liveRowNums.length} (got: ${liveRowNums.slice(0, 10).join(', ')}...)`);
+
       const liveCsv = tableDataToCSV(liveCaptureResult);
-      const liveCsvLines = liveCsv.replace(/^\uFEFF/, '').trim().split('\n');
+      const liveCsvLines = liveCsv.replace(/^\uFEFF/, '').trim().split(/\r?\n/);
       assert(!liveCsvLines[0].includes(',,'), 'Live CSV header contains no double commas');
       assert(liveCsvLines[1].startsWith('1,Tony Smith,'), 'Live CSV row 1 starts with "1,Tony Smith," (no empty column A)');
 
       await livePage.close();
     } catch (liveErr) {
-      console.warn('  ⚠️ Note: Live ag-grid.com test skipped or network failed:', liveErr.message);
+      console.warn('  ⚠️ Note: Live ag-grid.com test failed or timed out:', liveErr.message);
     }
 
   } finally {
