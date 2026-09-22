@@ -88,16 +88,16 @@ Upload the following pre-rendered assets generated directly from the project:
 When requested in the Partner Center submission form:
 
 - **`activeTab`**:
-  > *Justification*: Required to inspect the active tab for HTML tables and virtualized data grids only when the user explicitly clicks the extension popup action. The extension does not monitor browsing history or access tabs in the background.
+  > *Justification*: Required to access the active tab only when the user explicitly clicks the extension popup action. The extension does not monitor browsing history, has no background tracking, and only interacts with the webpage currently open when the popup is launched.
 
 - **`scripting`**:
-  > *Justification*: Required to inject the content scanner script into the active tab on-demand to calculate table dimensions, extract row/cell contents, and coordinate virtualized scroll capture.
+  > *Justification*: Required to inject the table extraction script (`content.js`) into the active tab on-demand only when the user opens the extension popup. It runs client-side to calculate table dimensions, extract row/cell contents, and coordinate virtualized scroll capture.
 
 - **`storage`**:
   > *Justification*: Required to store user export preferences (such as selected file format, row range, and max row limits) and persist the user's Pro license activation status locally on the device.
 
-- **Host Permissions**:
-  > *None*: Broad `<all_urls>` host permissions are not requested.
+- **Host Permissions & Content Scripts**:
+  > *None*: No broad host permissions (`<all_urls>`, `*://*/*`) or automatic background `content_scripts` are requested or declared. The extension never runs code on pages automatically in the background.
 
 ---
 
@@ -113,15 +113,16 @@ Table Extractor detects standard HTML tables and virtualized data grids on webpa
 Testing Instructions:
 1. Load any webpage containing a standard HTML table (for example, Wikipedia: https://en.wikipedia.org/wiki/List_of_highest-grossing_films).
 2. Click the Table Extractor extension icon in the toolbar.
+   - When the popup opens, activeTab and scripting inject the extraction script on-demand into that tab.
 3. The popup will display the detected table name, row/col dimensions, and an "Export Table" button. Click "Export Table" to download the CSV export.
 4. To test Virtualized Data Grid detection:
-   Visit any web page with an AG Grid or virtualized scroll container (e.g. https://www.ag-grid.com/example/). The extension will identify the grid as "Virtualized Grid" and offer "Capture all" or "Just visible rows".
+   Visit any web page with an AG Grid or virtualized scroll container (e.g. https://www.ag-grid.com/example/). Click the extension icon. The extension will identify the grid as "Virtualized Grid" and offer "Capture all" or "Just visible rows".
 5. To test Pro tier features:
    Click "License & Pro Status" in the footer, enter the test review gift code:
    TE-GIFT-PUT-CODE-HERE
    Click "Activate". Pro status will be activated immediately, unlocking all export formats and virtualized capture.
 
-All table processing occurs entirely on the client side in the user's browser.
+All table processing occurs entirely on the client side in the user's browser. No background monitoring or automatic script injection occurs.
 Support contact: sidoua26@gmail.com
 Privacy policy: https://bulkgrab-licensing.sidoua26.workers.dev/privacy/table-extractor
 

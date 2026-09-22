@@ -297,8 +297,40 @@ async function run() {
     assert(html.includes('BulkGrab Privacy Policy'), 'Existing /privacy route continues to serve BulkGrab privacy policy by default');
   }
 
+  // --- UNIT TESTS: Manifest & Store Package Least-Privilege Verification ---
+  console.log('\n--- 2c. Testing Manifest & Store Package Least-Privilege Architecture ---');
+  const { buildPackage } = await import('../scripts/package.js');
+  const JSZip = (await import('jszip')).default;
+
+  // 1. Root manifest assertions
+  const rootManifest = JSON.parse(fs.readFileSync(path.resolve(__dirname, '..', 'manifest.json'), 'utf8'));
+  assert(!rootManifest.content_scripts, 'Root manifest has NO content_scripts declared');
+  assert(!rootManifest.host_permissions || rootManifest.host_permissions.length === 0, 'Root manifest has NO host_permissions declared');
+  assert(!rootManifest.web_accessible_resources, 'Root manifest has NO web_accessible_resources declared');
+  assert(Array.isArray(rootManifest.permissions) && rootManifest.permissions.length === 3, 'Root manifest requests exactly 3 permissions');
+  assert(rootManifest.permissions.includes('activeTab'), 'Root manifest permissions include activeTab');
+  assert(rootManifest.permissions.includes('scripting'), 'Root manifest permissions include scripting');
+  assert(rootManifest.permissions.includes('storage'), 'Root manifest permissions include storage');
+
+  // 2. Build and verify store ZIP package
+  const pkgRes = await buildPackage({ quiet: true });
+  assert(fs.existsSync(pkgRes.outputPath), 'Store package ZIP generated at dist/table-extractor-store.zip');
+  const zipBuf = fs.readFileSync(pkgRes.outputPath);
+  const zip = await JSZip.loadAsync(zipBuf);
+  const storeManifestFile = zip.file('manifest.json');
+  assert(storeManifestFile !== null, 'manifest.json exists at root of store ZIP');
+  const storeManifest = JSON.parse(await storeManifestFile.async('string'));
+  assert(!storeManifest.content_scripts, 'Store ZIP manifest has NO content_scripts');
+  assert(!storeManifest.host_permissions || storeManifest.host_permissions.length === 0, 'Store ZIP manifest has NO host_permissions');
+  assert(!storeManifest.web_accessible_resources, 'Store ZIP manifest has NO web_accessible_resources');
+  assert(storeManifest.permissions.length === 3, 'Store ZIP manifest has exactly 3 permissions');
+  assert(storeManifest.permissions.includes('activeTab'), 'Store ZIP manifest has activeTab');
+  assert(storeManifest.permissions.includes('scripting'), 'Store ZIP manifest has scripting');
+  assert(storeManifest.permissions.includes('storage'), 'Store ZIP manifest has storage');
+  assert(!zip.file('assets/screenshots/01-static-detection.png'), 'Store ZIP excludes assets/screenshots/');
+
   // --- BROWSER TESTS: Puppeteer ---
-  console.log('\n--- 2. Testing Browser Virtualized Table Capture ---');
+  console.log('\n--- 3. Testing Browser Virtualized Table Capture ---');
   const browser = await puppeteer.launch({
     headless: true,
     executablePath: '/home/sid/.cache/puppeteer/chrome/linux-153.0.8010.36/chrome-linux64/chrome',

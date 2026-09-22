@@ -1144,6 +1144,11 @@
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const action = message.action;
 
+      if (action === 'TE_PING') {
+        sendResponse({ status: 'ok', initialized: true });
+        return true;
+      }
+
       if (action === 'TE_SCAN_TABLES') {
         const tables = scanPageTables();
         sendResponse({ status: 'ok', tables });

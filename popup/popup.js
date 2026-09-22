@@ -13,6 +13,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const tierBadgeEl = document.getElementById('tier-badge');
   const loadingStateEl = document.getElementById('loading-state');
   const emptyStateEl = document.getElementById('empty-state');
+  const emptyIconEl = document.getElementById('empty-icon');
+  const emptyTitleEl = document.getElementById('empty-title');
+  const emptyDescEl = document.getElementById('empty-desc');
   const tableViewEl = document.getElementById('table-view');
   const tableSelectEl = document.getElementById('table-select');
   const infoDimensionsEl = document.getElementById('info-dimensions');
@@ -109,9 +112,120 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   await refreshLicenseUI();
 
-  // 3. Scan Tables on Page
+  // 3. Content Script Injection & Restricted Page Guard
+  function isRestrictedPage(url) {
+    if (!url || typeof url !== 'string') return false;
+    const lower = url.trim().toLowerCase();
+    // Browser internal pages
+    if (lower.startsWith('chrome://') ||
+        lower.startsWith('edge://') ||
+        lower.startsWith('about:') ||
+        lower.startsWith('chrome-extension://') ||
+        lower.startsWith('extension://') ||
+        lower.startsWith('view-source:') ||
+        lower.startsWith('file://')) {
+      return true;
+    }
+    // Extension web stores
+    if (lower.includes('chromewebstore.google.com') ||
+        lower.includes('chrome.google.com/webstore') ||
+        lower.includes('microsoftedge.microsoft.com/addons')) {
+      return true;
+    }
+    // PDF viewers
+    if (lower.endsWith('.pdf') || lower.includes('.pdf?') || lower.includes('.pdf#')) {
+      return true;
+    }
+    return false;
+  }
+
+  function showRestrictedPageUI(customMessage) {
+    loadingStateEl.style.display = 'none';
+    tableViewEl.style.display = 'none';
+    emptyStateEl.style.display = 'flex';
+
+    if (emptyIconEl) emptyIconEl.textContent = '🔒';
+    if (emptyTitleEl) emptyTitleEl.textContent = 'Page Protected';
+    if (emptyDescEl) {
+      emptyDescEl.textContent = customMessage || 'Table Extractor works on standard web pages. Browser system pages (chrome://, edge://), extension web stores, PDF viewers, and file:// pages cannot be inspected.';
+    }
+    if (btnRescan) btnRescan.style.display = 'none';
+  }
+
+  function showEmptyStateUI() {
+    loadingStateEl.style.display = 'none';
+    tableViewEl.style.display = 'none';
+    emptyStateEl.style.display = 'flex';
+
+    if (emptyIconEl) emptyIconEl.textContent = '📊';
+    if (emptyTitleEl) emptyTitleEl.textContent = 'No Tables Detected';
+    if (emptyDescEl) {
+      emptyDescEl.textContent = 'Could not find standard tables or data grids on this page.';
+    }
+    if (btnRescan) btnRescan.style.display = 'inline-block';
+  }
+
+  const injectedTabs = new Set();
+
+  async function ensureContentScriptInjected(tabId) {
+    if (!tabId) return false;
+
+    if (isRestrictedPage(activeTab?.url)) {
+      showRestrictedPageUI();
+      return false;
+    }
+
+    // 1. If confirmed in this session, verify with ping
+    if (injectedTabs.has(tabId)) {
+      try {
+        const ping = await chrome.tabs.sendMessage(tabId, { action: 'TE_PING' });
+        if (ping?.status === 'ok') return true;
+      } catch (_) {
+        injectedTabs.delete(tabId);
+      }
+    }
+
+    // 2. Ping to see if content script is already listening on the page
+    try {
+      const ping = await chrome.tabs.sendMessage(tabId, { action: 'TE_PING' });
+      if (ping?.status === 'ok') {
+        injectedTabs.add(tabId);
+        return true;
+      }
+    } catch (_) {}
+
+    // 3. Inject content.js on-demand via chrome.scripting.executeScript
+    try {
+      await chrome.scripting.executeScript({
+        target: { tabId },
+        files: ['content.js']
+      });
+      await new Promise(r => setTimeout(r, 60));
+      injectedTabs.add(tabId);
+      return true;
+    } catch (err) {
+      console.warn('[Popup] Content script injection failed:', err);
+      const errMsg = (err?.message || '').toLowerCase();
+      if (errMsg.includes('cannot access') ||
+          errMsg.includes('restricted') ||
+          errMsg.includes('missing host permission') ||
+          errMsg.includes('extensions gallery')) {
+        showRestrictedPageUI();
+        return false;
+      }
+      showRestrictedPageUI('Could not inspect this page. Please open a standard web page.');
+      return false;
+    }
+  }
+
+  // 4. Scan Tables on Page
   async function scanTables() {
     if (!activeTab?.id) return;
+
+    if (isRestrictedPage(activeTab?.url)) {
+      showRestrictedPageUI();
+      return;
+    }
 
     loadingStateEl.style.display = 'flex';
     emptyStateEl.style.display = 'none';
@@ -119,20 +233,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     captureProgressView.style.display = 'none';
 
     try {
-      // First attempt to send message
-      let response;
-      try {
-        response = await chrome.tabs.sendMessage(activeTab.id, { action: 'TE_SCAN_TABLES' });
-      } catch (_) {
-        // Inject content script if not already present
-        await chrome.scripting.executeScript({
-          target: { tabId: activeTab.id },
-          files: ['content.js']
-        });
-        await new Promise(r => setTimeout(r, 100));
-        response = await chrome.tabs.sendMessage(activeTab.id, { action: 'TE_SCAN_TABLES' });
-      }
+      const injected = await ensureContentScriptInjected(activeTab.id);
+      if (!injected) return;
 
+      const response = await chrome.tabs.sendMessage(activeTab.id, { action: 'TE_SCAN_TABLES' });
       loadingStateEl.style.display = 'none';
 
       if (response && response.status === 'ok' && response.tables?.length > 0) {
@@ -140,12 +244,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         populateTableList(detectedTables);
         tableViewEl.style.display = 'block';
       } else {
-        emptyStateEl.style.display = 'flex';
+        showEmptyStateUI();
       }
     } catch (err) {
       console.warn('[Popup] Error scanning tables:', err);
       loadingStateEl.style.display = 'none';
-      emptyStateEl.style.display = 'flex';
+      showEmptyStateUI();
     }
   }
 
@@ -201,9 +305,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Highlight on page
     if (activeTab?.id) {
-      chrome.tabs.sendMessage(activeTab.id, {
-        action: 'TE_HIGHLIGHT_TABLE',
-        tableId: table.id
+      ensureContentScriptInjected(activeTab.id).then((ok) => {
+        if (ok) {
+          chrome.tabs.sendMessage(activeTab.id, {
+            action: 'TE_HIGHLIGHT_TABLE',
+            tableId: table.id
+          }).catch(() => {});
+        }
       }).catch(() => {});
     }
   }
@@ -300,6 +408,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       btnExportVisible.disabled = true;
       btnExportVisible.textContent = 'Exporting...';
 
+      const injected = await ensureContentScriptInjected(activeTab.id);
+      if (!injected) {
+        return;
+      }
+
       const response = await chrome.tabs.sendMessage(activeTab.id, {
         action: 'TE_CAPTURE_STATIC',
         tableId: currentTable.id,
@@ -359,6 +472,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const selectedFormatsCount = [fmtCsvEl.checked, fmtXlsxEl.checked, fmtJsonEl.checked].filter(Boolean).length;
     if (selectedFormatsCount === 0) {
       alert('Please select at least one export format (CSV, XLSX, JSON).');
+      return;
+    }
+
+    const injected = await ensureContentScriptInjected(activeTab.id);
+    if (!injected) {
       return;
     }
 
