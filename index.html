@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Table Extractor — Turn Web Tables into Clean Spreadsheets in 1-Click</title>
+  <meta name="description" content="Auto-detect HTML tables and virtualized data grids. Export clean CSV, Excel (XLSX), or copy to clipboard instantly. 100% client-side privacy.">
+  <link rel="icon" type="image/png" sizes="48x48" href="assets/icons/icon-48.png">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Header / Navigation -->
+  <header class="site-header">
+    <div class="container header-container">
+      <a href="#" class="brand">
+        <img src="assets/icons/icon-48.png" alt="Table Extractor Logo" class="brand-logo" width="36" height="36">
+        <span class="brand-name">Table Extractor</span>
+        <span class="brand-tag">v1.0</span>
+      </a>
+
+      <nav class="nav-links">
+        <a href="#demo-video">Video Demo</a>
+        <a href="#features">Features</a>
+        <a href="#demo">Live Demo</a>
+        <a href="#how-it-works">How It Works</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+
+      <div class="header-actions">
+        <a href="https://chromewebstore.google.com" target="_blank" rel="noopener" class="btn btn-primary btn-sm">
+          <svg class="icon-chrome" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+          </svg>
+          Add to Chrome
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="container hero-container">
+      <div class="hero-badge">
+        <span class="badge-dot"></span>
+        <span>Chrome Extension · Manifest V3 · 100% Private</span>
+      </div>
+
+      <h1 class="hero-title">
+        Turn Any Web Table into <span class="text-gradient">Clean Spreadsheets</span> in Seconds
+      </h1>
+
+      <p class="hero-subtitle">
+        Automatically detect HTML tables, AG Grid, and complex virtualized feeds. Export clean CSV or Excel files with one click — no scraping scripts, no data corruption, and zero cloud tracking.
+      </p>
+
+      <div class="hero-cta-group">
+        <a href="https://chromewebstore.google.com" target="_blank" rel="noopener" class="btn btn-primary btn-lg">
+          <svg class="icon-chrome" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+          </svg>
+          <span>Download for Chrome</span>
+          <span class="btn-subtext">Free · Instant Install</span>
+        </a>
+        <a href="#demo" class="btn btn-secondary btn-lg">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          Try Interactive Demo
+        </a>
+      </div>
+
+      <!-- Trust Badges -->
+      <div class="hero-trust">
+        <div class="trust-item">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>100% Client-Side Privacy</span>
+        </div>
+        <div class="trust-item">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>Virtualized AG Grid Support</span>
+        </div>
+        <div class="trust-item">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>Excel (.xlsx), CSV & JSON</span>
+        </div>
+      </div>
+
+      <!-- Hero Visual / App Mockup -->
+      <div class="hero-preview-frame">
+        <div class="preview-browser-bar">
+          <div class="window-dots">
+            <span class="dot dot-red"></span>
+            <span class="dot dot-yellow"></span>
+            <span class="dot dot-green"></span>
+          </div>
+          <div class="browser-address">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#10b981" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span>portal.enterprise-analytics.com/quarterly-metrics</span>
+          </div>
+          <div class="extension-chip">
+            <img src="assets/icons/icon-16.png" alt="Icon" width="14" height="14">
+            <span>Table Extractor Active</span>
+          </div>
+        </div>
+
+        <div class="hero-showcase">
+          <!-- Background Data Table Mock -->
+          <div class="showcase-table-side">
+            <div class="table-mock-header">
+              <h3>Enterprise Performance Index</h3>
+              <span class="badge-count">100 Records Detected</span>
+            </div>
+            <div class="table-mock-wrapper">
+              <table class="mock-table">
+                <thead>
+                  <tr>
+                    <th>Row</th>
+                    <th>Account Name</th>
+                    <th>Region</th>
+                    <th>Quarter</th>
+                    <th>Status</th>
+                    <th>Revenue</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="highlighted-row">
+                    <td>1</td>
+                    <td>Apex Global Systems</td>
+                    <td>North America</td>
+                    <td>Q3 2026</td>
+                    <td><span class="status-pill status-active">Active</span></td>
+                    <td>$452,190</td>
+                  </tr>
+                  <tr class="highlighted-row">
+                    <td>2</td>
+                    <td>Vanguard Logic Ltd</td>
+                    <td>EMEA</td>
+                    <td>Q3 2026</td>
+                    <td><span class="status-pill status-active">Active</span></td>
+                    <td>$318,440</td>
+                  </tr>
+                  <tr class="highlighted-row">
+                    <td>3</td>
+                    <td>BluePeak Data Corp</td>
+                    <td>APAC</td>
+                    <td>Q3 2026</td>
+                    <td><span class="status-pill status-pending">Pending</span></td>
+                    <td>$184,920</td>
+                  </tr>
+                  <tr class="highlighted-row">
+                    <td>4</td>
+                    <td>Crestline Analytics</td>
+                    <td>North America</td>
+                    <td>Q3 2026</td>
+                    <td><span class="status-pill status-active">Active</span></td>
+                    <td>$629,000</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Floating Popup Card -->
+          <div class="showcase-popup-card">
+            <div class="popup-mini-header">
+              <div class="popup-mini-brand">
+                <img src="assets/icons/icon-48.png" width="22" height="22" alt="Logo">
+                <span>Table Extractor</span>
+              </div>
+              <span class="popup-mini-tier">PRO</span>
+            </div>
+
+            <div class="popup-mini-body">
+              <div class="mini-meta">
+                <span class="meta-label">Selected:</span>
+                <span class="meta-val">Performance Index</span>
+              </div>
+              <div class="mini-stats">
+                <div class="stat-box">
+                  <span class="stat-num">100</span>
+                  <span class="stat-name">Rows</span>
+                </div>
+                <div class="stat-box">
+                  <span class="stat-num">6</span>
+                  <span class="stat-name">Columns</span>
+                </div>
+                <div class="stat-box">
+                  <span class="stat-badge">Clean</span>
+                  <span class="stat-name">Normalized</span>
+                </div>
+              </div>
+
+              <div class="mini-formats">
+                <span class="format-pill active">CSV</span>
+                <span class="format-pill active">Excel (.xlsx)</span>
+                <span class="format-pill active">JSON</span>
+              </div>
+
+              <button class="btn btn-primary btn-block btn-mock-pulse">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export Table (1-Click)
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Video Showcase Section -->
+  <section id="demo-video" class="section video-section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Video Walkthrough</span>
+        <h2 class="section-title">See Table Extractor in Action</h2>
+        <p class="section-desc">Watch how Table Extractor detects complex tables, handles virtualized scroll containers, and exports clean spreadsheets in under 45 seconds.</p>
+      </div>
+
+      <div class="video-container">
+        <div class="video-frame">
+          <video controls playsinline preload="metadata" class="demo-video-player" poster="processed_screenshots/01-detect.png">
+            <source src="assets/videos/table-extractor-demo.mp4" type="video/mp4">
+            <p class="video-fallback">Your browser does not support the HTML5 video tag. You can <a href="assets/videos/table-extractor-demo.mp4">download the demo video here</a>.</p>
+          </video>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Grid -->
+  <section id="features" class="section features-section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Powerful Extraction Engine</span>
+        <h2 class="section-title">Built for Analysts, Developers & Power Users</h2>
+        <p class="section-desc">Traditional copy-pasting breaks on merged cells, infinite feeds, and nested HTML. Table Extractor solves it with intelligent DOM parsing.</p>
+      </div>
+
+      <div class="features-grid">
+        <!-- Feature 1 -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper icon-blue">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+              <line x1="3" y1="9" x2="21" y2="9"/>
+              <line x1="3" y1="15" x2="21" y2="15"/>
+              <line x1="9" y1="3" x2="9" y2="21"/>
+              <line x1="15" y1="3" x2="15" y2="21"/>
+            </svg>
+          </div>
+          <h3>Auto-Detection of Any Table</h3>
+          <p>Instantly scans the active tab for standard HTML <code>&lt;table&gt;</code> elements, AG Grid instances, Datatables, and modern Div/Flex layout grids.</p>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper icon-emerald">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </div>
+          <h3>1-Click Export to CSV & Excel</h3>
+          <p>Export directly to industry-standard <code>.csv</code> and real Microsoft Excel <code>.xlsx</code> with proper data typing, plus structured <code>.json</code>.</p>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper icon-purple">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+          </div>
+          <h3>Copy to Clipboard</h3>
+          <p>Format tabular data cleanly as Tab-Separated Values (TSV) and copy straight to clipboard for instantaneous pasting into Google Sheets, Excel, or Notion.</p>
+        </div>
+
+        <!-- Feature 4 -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper icon-amber">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="4 14 10 14 10 20"/>
+              <polyline points="20 10 14 10 14 4"/>
+              <line x1="14" y1="10" x2="21" y2="3"/>
+              <line x1="3" y1="21" x2="10" y2="14"/>
+            </svg>
+          </div>
+          <h3>Clean Data Formatting</h3>
+          <p>Automatically handles complex <code>rowspan</code> and <code>colspan</code> un-merging, removes trailing whitespace, and converts form inputs, buttons, and badges into clean text.</p>
+        </div>
+
+        <!-- Feature 5 -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper icon-cyan">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+          </div>
+          <h3>Infinite Virtualized Capture</h3>
+          <p>Captures dynamic DOM-recycling tables like AG Grid and infinite scrolls. Scrolls through thousands of rows automatically and merges them without duplicates.</p>
+        </div>
+
+        <!-- Feature 6 -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper icon-rose">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </div>
+          <h3>100% Client-Side & Private</h3>
+          <p>No backend scraping servers, no third-party APIs, and no account creation. Your tabular data never leaves your browser sandbox.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Live Demo Section -->
+  <section id="demo" class="section demo-section">
+    <div class="container">
+      <div class="demo-card">
+        <div class="demo-header">
+          <div>
+            <span class="section-tag">Interactive Sandbox</span>
+            <h2 class="demo-title">Test the Extraction Engine Right Now</h2>
+            <p class="demo-subtitle">This table below represents typical messy data. Try exporting it to CSV or copying to clipboard to test the clean tabular output.</p>
+          </div>
+          <div class="demo-action-bar">
+            <button id="demo-export-csv" class="btn btn-primary">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Export CSV
+            </button>
+            <button id="demo-copy-tsv" class="btn btn-secondary">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span id="copy-btn-text">Copy to Clipboard (TSV)</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="demo-table-container">
+          <table id="sandbox-table" class="demo-data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Product / Service</th>
+                <th>Category</th>
+                <th>Monthly Volume</th>
+                <th>Unit Price</th>
+                <th>Gross Margin</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>SKU-8821</td>
+                <td>Cloud Database Cluster</td>
+                <td>Infrastructure</td>
+                <td>1,420 units</td>
+                <td>$240.00</td>
+                <td>68.4%</td>
+                <td><span class="status-pill status-active">Active</span></td>
+              </tr>
+              <tr>
+                <td>SKU-8822</td>
+                <td>Enterprise SSO Connector</td>
+                <td>Security</td>
+                <td>890 units</td>
+                <td>$150.00</td>
+                <td>82.1%</td>
+                <td><span class="status-pill status-active">Active</span></td>
+              </tr>
+              <tr>
+                <td>SKU-8823</td>
+                <td>API Rate Limit Gateway</td>
+                <td>Networking</td>
+                <td>3,100 units</td>
+                <td>$95.00</td>
+                <td>74.0%</td>
+                <td><span class="status-pill status-active">Active</span></td>
+              </tr>
+              <tr>
+                <td>SKU-8824</td>
+                <td>Automated Compliance Auditor</td>
+                <td>Governance</td>
+                <td>410 units</td>
+                <td>$480.00</td>
+                <td>89.5%</td>
+                <td><span class="status-pill status-pending">In Review</span></td>
+              </tr>
+              <tr>
+                <td>SKU-8825</td>
+                <td>Realtime Telemetry Pipe</td>
+                <td>Analytics</td>
+                <td>5,600 units</td>
+                <td>$60.00</td>
+                <td>61.8%</td>
+                <td><span class="status-pill status-active">Active</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div id="demo-toast" class="demo-toast" style="display: none;">
+          ✓ Copied 5 rows to clipboard! Ready to paste directly into Google Sheets or Excel.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works Section -->
+  <section id="how-it-works" class="section steps-section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Simple Workflow</span>
+        <h2 class="section-title">From Web Page to Spreadsheet in 3 Steps</h2>
+      </div>
+
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-number">01</div>
+          <h3>Navigate to Any Table</h3>
+          <p>Browse to any webpage with data — financial portals, CRM dashboards, sports statistics, Wikipedia, or inventory grids.</p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-number">02</div>
+          <h3>Click the Extension</h3>
+          <p>Table Extractor instantly detects all tables on the page, showing you row/column dimensions and virtualized status.</p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-number">03</div>
+          <h3>Download Clean File</h3>
+          <p>Select CSV or Excel and hit export. Get clean, formatted tabular data with zero empty cells or scrambled columns.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section id="faq" class="section faq-section">
+    <div class="container faq-container">
+      <div class="section-header">
+        <span class="section-tag">Got Questions?</span>
+        <h2 class="section-title">Frequently Asked Questions</h2>
+      </div>
+
+      <div class="faq-list">
+        <div class="faq-item">
+          <h4>Does Table Extractor send my data to external servers?</h4>
+          <p>No. Table Extractor runs 100% locally inside your browser sandbox. Your web page data is never transmitted across the network or stored on any server.</p>
+        </div>
+
+        <div class="faq-item">
+          <h4>Can it handle virtualized or infinite scroll tables?</h4>
+          <p>Yes! Many modern enterprise web applications (like AG Grid, Salesforce, or Airtable) use DOM virtualization where only visible rows exist in the HTML. Table Extractor automatically scrolls the container, stitches batches, and reconstructs the full dataset.</p>
+        </div>
+
+        <div class="faq-item">
+          <h4>What formats are supported for export?</h4>
+          <p>You can export directly to CSV (.csv), Microsoft Excel (.xlsx), structured JSON (.json), or copy clean Tab-Separated Values (TSV) directly to your clipboard.</p>
+        </div>
+
+        <div class="faq-item">
+          <h4>Does Table Extractor run on background pages automatically?</h4>
+          <p>No. Following the least-privilege security model, Table Extractor only injects into a tab when you explicitly open the extension popup. It does not monitor or track background tabs.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Call to Action Banner -->
+  <section class="cta-section">
+    <div class="container cta-container">
+      <h2 class="cta-title">Start Extracting Clean Data Today</h2>
+      <p class="cta-subtitle">Install Table Extractor for Chrome and export any web table to CSV or Excel in seconds.</p>
+      <div class="cta-buttons">
+        <a href="https://chromewebstore.google.com" target="_blank" rel="noopener" class="btn btn-primary btn-lg">
+          <svg class="icon-chrome" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+          </svg>
+          Add to Chrome — It's Free
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container footer-container">
+      <div class="footer-brand-side">
+        <div class="footer-logo">
+          <img src="assets/icons/icon-48.png" alt="Table Extractor" width="28" height="28">
+          <span>Table Extractor</span>
+        </div>
+        <p class="footer-copy">The fast, privacy-first web table and data grid export extension.</p>
+      </div>
+
+      <div class="footer-links-side">
+        <div class="footer-col">
+          <span class="footer-heading">Support & Contact</span>
+          <a href="mailto:sidoua26@gmail.com" class="footer-link">sidoua26@gmail.com</a>
+        </div>
+        <div class="footer-col">
+          <span class="footer-heading">Legal & Privacy</span>
+          <a href="https://bulkgrab-licensing.sidoua26.workers.dev/privacy/table-extractor" target="_blank" rel="noopener" class="footer-link">Privacy Policy</a>
+          <span class="footer-text">100% Client-Side Extension</span>
+        </div>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <p>© 2026 Table Extractor. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- Interactive Demo Script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const table = document.getElementById('sandbox-table');
+      const btnExport = document.getElementById('demo-export-csv');
+      const btnCopy = document.getElementById('demo-copy-tsv');
+      const toast = document.getElementById('demo-toast');
+      const copyText = document.getElementById('copy-btn-text');
+
+      function extractTableData() {
+        const rows = Array.from(table.querySelectorAll('tr'));
+        return rows.map(row => {
+          const cells = Array.from(row.querySelectorAll('th, td'));
+          return cells.map(c => c.textContent.trim().replace(/\s+/g, ' '));
+        });
+      }
+
+      // Export CSV
+      btnExport.addEventListener('click', () => {
+        const data = extractTableData();
+        const csvContent = data.map(row => 
+          row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(',')
+        ).join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'table-extractor-demo.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      });
+
+      // Copy TSV to Clipboard
+      btnCopy.addEventListener('click', async () => {
+        const data = extractTableData();
+        const tsvContent = data.map(row => row.join('\t')).join('\n');
+
+        try {
+          await navigator.clipboard.writeText(tsvContent);
+          toast.style.display = 'block';
+          copyText.textContent = 'Copied to Clipboard!';
+          setTimeout(() => {
+            toast.style.display = 'none';
+            copyText.textContent = 'Copy to Clipboard (TSV)';
+          }, 3500);
+        } catch (err) {
+          console.warn('Clipboard write failed:', err);
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -30,6 +30,8 @@ const INCLUDED_ROOT_FILES = [
 const EXCLUDED_PATTERNS = [
   /^(test|scripts|node_modules|\.git|dist)(\/|$)/,
   /^assets\/screenshots(\/|$)/,
+  /^assets\/videos(\/|$)/,
+  /\.(mp4|webm|ogg|mov)$/i,
   /^assets\/icons\/icon-300\.png$/i,
   /^assets\/icons\/.*\.svg$/i,
   /\.md$/i,
