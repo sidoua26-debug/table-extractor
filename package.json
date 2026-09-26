@@ -1,6 +1,6 @@
 {
   "name": "table-extractor",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Chrome extension to detect, virtualize-scroll, and export HTML tables and data grids to CSV/XLSX/JSON.",
   "scripts": {
     "render-icons": "node scripts/render-icons.js",

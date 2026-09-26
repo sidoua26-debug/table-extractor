@@ -29,7 +29,7 @@
   Detect and export HTML tables and virtualized data grids to CSV, Excel (XLSX), and JSON.
   ```
 - **Category**: Productivity *(Secondary: Developer tools)*
-- **Version**: 1.0.0
+- **Version**: 1.0.1
 - **Support Contact / Email**: sidoua26@gmail.com
 - **Privacy Policy URL**: https://bulkgrab-licensing.sidoua26.workers.dev/privacy/table-extractor
 - **Website URL**: https://bulkgrab-licensing.sidoua26.workers.dev/privacy/table-extractor
