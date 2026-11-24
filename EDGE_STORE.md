@@ -29,16 +29,16 @@
   Detect and export HTML tables and virtualized data grids to CSV, Excel (XLSX), and JSON.
   ```
 - **Category**: Productivity *(Secondary: Developer tools)*
-- **Version**: 1.0.1
+- **Version**: 1.0.2
 - **Support Contact / Email**: sidoua26@gmail.com
 - **Privacy Policy URL**: https://bulkgrab-licensing.sidoua26.workers.dev/privacy/table-extractor
 - **Website URL**: https://bulkgrab-licensing.sidoua26.workers.dev/privacy/table-extractor
 
 ### Detailed Description
 ```markdown
-Table Extractor makes it effortless to capture, inspect, and export data tables and complex data grids from any webpage into clean spreadsheets and structured data files.
+Export a table from a webpage to Excel (.xlsx), CSV, or JSON. The free version works with standard HTML tables and lets you download one format at a time. Pro adds capture for supported virtualized grids, including AG Grid, and lets you export several formats at once. Table extraction runs locally in your browser.
 
-Whether you are extracting financial tables, public datasets, directories, or enterprise dashboards, Table Extractor scans the page and gives you clean, one-click exports without messy manual copy-pasting or broken column formatting.
+Whether you are extracting financial reports, public datasets, directories, or enterprise dashboards, Table Extractor scans the page and gives you clean, one-click exports without messy manual copy-pasting or broken column formatting.
 
 Key Capabilities:
 
@@ -48,7 +48,7 @@ Automatically discovers standard HTML tables (<thead>/<tbody>) as well as modern
 • Multi-Format Clean Export
 Export your data directly to:
 - CSV (with UTF-8 BOM encoding for seamless opening in Microsoft Excel)
-- Microsoft Excel Spreadsheet (.xlsx)
+- Microsoft Excel Spreadsheet (.xlsx / SpreadsheetML XML)
 - JSON (structured record objects or 2D arrays)
 
 • Virtualized Data Grid Capture (Pro Feature)
@@ -76,8 +76,10 @@ Upload the following pre-rendered assets generated directly from the project:
 | Asset | Size | File Location | Purpose |
 | :--- | :--- | :--- | :--- |
 | **Store Logo** | 300 × 300 px | `assets/icons/icon-300.png` | Main extension logo in Edge Add-ons store and search results |
-| **Screenshot 1** | 1280 × 800 px | `assets/screenshots/01-static-detection.png` | Static HTML table detection & one-click export |
-| **Screenshot 2** | 1280 × 800 px | `assets/screenshots/02-virtualized-detection.png` | Virtualized data grid detection & capture prompt |
+| **Screenshot 1** | 1280 × 800 px | `assets/screenshots/01-static-detection.png` | Free tier: "Export HTML tables to Excel or CSV" with standard HTML table and readable column headers |
+| **Screenshot 2** | 1280 × 800 px | `assets/screenshots/02-virtualized-detection.png` | Pro tier: "Capture virtualized grids with Pro" with AG Grid fixture and verified 100-row reconstructed capture |
+| **Thumbnail 1** | 320 × 200 px | `assets/screenshots/preview-320-01-static-detection.png` | Mobile / low-resolution preview verification for Screenshot 1 |
+| **Thumbnail 2** | 320 × 200 px | `assets/screenshots/preview-320-02-virtualized-detection.png` | Mobile / low-resolution preview verification for Screenshot 2 |
 | **Screenshot 3** | 1280 × 800 px | `assets/screenshots/03-pro-unlocked.png` | Pro unlocked state with multi-format export |
 | **Screenshot 4** | 1280 × 800 px | `assets/screenshots/04-export-options.png` | Detailed capture options (range, hidden columns, limits) |
 
