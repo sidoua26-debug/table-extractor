@@ -7,7 +7,7 @@ import { buildPackage } from '../scripts/package.js';
 
 const CLEAN_UNPACK_DIR = '/tmp/table-extractor-unpacked-clean';
 const TEST_UNPACK_DIR = '/tmp/table-extractor-test-unpacked';
-const FIXTURE_PATH = '/home/sid/projects/table-extractor/test/virtualized-table.html';
+const FIXTURE_PATH = new URL('./virtualized-table.html', import.meta.url).pathname;
 
 async function main() {
   console.log('====================================================');
